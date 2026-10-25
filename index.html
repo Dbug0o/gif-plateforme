@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0b0420">
-<title>NéoGIF — Ton usine à GIF</title>
+<title>Neo GIF — Ton usine à GIF</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bungee&family=Orbitron:wght@700&family=Permanent+Marker&family=Press+Start+2P&display=swap" rel="stylesheet">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
@@ -11,94 +11,95 @@
 </head>
 <body>
 <header>
-  <h1 class="logo">NÉO<span>GIF</span></h1>
+  <h1 class="logo">NEO<span>GIF</span></h1>
   <nav>
-    <button class="tab active" data-tab="creer">⚡ Créer</button>
-    <button class="tab" data-tab="biblio">📼 Bibliothèque</button>
+    <button class="tab active" data-tab="creer"><span data-i18n="tabCreate">⚡ Créer</span></button>
+    <button class="tab" data-tab="biblio"><span data-i18n="tabLib">📼 Bibliothèque</span></button>
   </nav>
+  <select id="langSel" class="lang" aria-label="Langue" data-i18n-title="lang"></select>
 </header>
 <main>
 <section id="creer" class="panel active">
   <div class="card">
-    <h2>1. Ta source</h2>
+    <h2 data-i18n="srcH">1. Ta source</h2>
     <div class="row">
-      <label class="btn big">🎬 Vidéo → GIF<input type="file" id="inVideo" accept="video/*" hidden></label>
-      <label class="btn big alt">🖼️ Image(s) → GIF<input type="file" id="inImages" accept="image/*" multiple hidden></label>
+      <label class="btn big"><span data-i18n="btnVideo">🎬 Vidéo → GIF</span><input type="file" id="inVideo" accept="video/*" hidden></label>
+      <label class="btn big alt"><span data-i18n="btnImages">🖼️ Image(s) → GIF</span><input type="file" id="inImages" accept="image/*" multiple hidden></label>
     </div>
-    <p id="srcInfo" class="muted">Aucun fichier choisi. Tout se fait sur ton appareil — rien n'est envoyé sur un serveur.</p>
+    <p id="srcInfo" class="muted" data-i18n="srcNone">Aucun fichier choisi. Tout se fait sur ton appareil — rien n'est envoyé sur un serveur.</p>
   </div>
 
   <div id="editor" hidden>
     <div class="card">
-      <h2>2. Réglages</h2>
+      <h2 data-i18n="setH">2. Réglages</h2>
       <div id="videoOpts">
-        <h3>✂️ Découpe</h3>
-        <label>Début : <b id="vStart">0.0</b> s<input type="range" id="tStart" min="0" step="0.1" value="0"></label>
-        <label>Fin : <b id="vEnd">0.0</b> s<input type="range" id="tEnd" min="0" step="0.1" value="0"></label>
+        <h3 data-i18n="cutH">✂️ Découpe</h3>
+        <label><span data-i18n="start">Début :</span> <b id="vStart">0.0</b> s<input type="range" id="tStart" min="0" step="0.1" value="0"></label>
+        <label><span data-i18n="end">Fin :</span> <b id="vEnd">0.0</b> s<input type="range" id="tEnd" min="0" step="0.1" value="0"></label>
       </div>
       <div id="imageOpts" hidden>
-        <label>Durée par image : <b id="vDelay">500</b> ms<input type="range" id="imgDelay" min="50" max="3000" step="50" value="500"></label>
+        <label><span data-i18n="imgDelay">Durée par image :</span> <b id="vDelay">500</b> ms<input type="range" id="imgDelay" min="50" max="3000" step="50" value="500"></label>
       </div>
-      <h3>🎞️ Fluidité &amp; vitesse</h3>
-      <label id="fpsWrap">Fluidité : <b id="vFps">12</b> i/s<input type="range" id="fps" min="4" max="30" value="12"></label>
-      <label>Vitesse : <b id="vSpeed">1</b>×<input type="range" id="speed" min="0.25" max="4" step="0.25" value="1"></label>
-      <h3>🔲 Recadrage</h3>
+      <h3 data-i18n="fluidH">🎞️ Fluidité &amp; vitesse</h3>
+      <label id="fpsWrap"><span data-i18n="fps">Fluidité :</span> <b id="vFps">12</b> <span data-i18n="fpsUnit">i/s</span><input type="range" id="fps" min="4" max="30" value="12"></label>
+      <label><span data-i18n="speed">Vitesse :</span> <b id="vSpeed">1</b>×<input type="range" id="speed" min="0.25" max="4" step="0.25" value="1"></label>
+      <h3 data-i18n="cropH">🔲 Recadrage</h3>
       <div class="chips" id="cropChips">
-        <button data-crop="orig" class="chip active">Original</button>
-        <button data-crop="1:1" class="chip">Carré</button>
-        <button data-crop="9:16" class="chip">Vertical</button>
-        <button data-crop="16:9" class="chip">Horizontal</button>
-        <button data-crop="free" class="chip">Libre</button>
+        <button data-crop="orig" class="chip active" data-i18n="cOrig">Original</button>
+        <button data-crop="1:1" class="chip" data-i18n="cSquare">Carré</button>
+        <button data-crop="9:16" class="chip" data-i18n="cVert">Vertical</button>
+        <button data-crop="16:9" class="chip" data-i18n="cHoriz">Horizontal</button>
+        <button data-crop="free" class="chip" data-i18n="cFree">Libre</button>
       </div>
       <div id="freeCrop" hidden>
-        <label>Ratio libre L/H : <b id="vRatio">1.00</b><input type="range" id="ratio" min="0.4" max="2.5" step="0.01" value="1"></label>
+        <label><span data-i18n="freeRatio">Ratio libre L/H :</span> <b id="vRatio">1.00</b><input type="range" id="ratio" min="0.4" max="2.5" step="0.01" value="1"></label>
       </div>
-      <label>Zoom : <b id="vZoom">1.0</b>×<input type="range" id="zoom" min="1" max="4" step="0.05" value="1"></label>
-      <label>Position ↔<input type="range" id="offX" min="0" max="1" step="0.01" value="0.5"></label>
-      <label>Position ↕<input type="range" id="offY" min="0" max="1" step="0.01" value="0.5"></label>
-      <label>Largeur max : <b id="vMaxW">480</b> px<input type="range" id="maxW" min="160" max="1280" step="16" value="480"></label>
-      <h3>💬 Texte (style mème)</h3>
-      <input type="text" id="txtTop" placeholder="Texte du haut">
-      <input type="text" id="txtBot" placeholder="Texte du bas">
+      <label><span data-i18n="zoom">Zoom :</span> <b id="vZoom">1.0</b>×<input type="range" id="zoom" min="1" max="4" step="0.05" value="1"></label>
+      <label><span data-i18n="posX">Position ↔</span><input type="range" id="offX" min="0" max="1" step="0.01" value="0.5"></label>
+      <label><span data-i18n="posY">Position ↕</span><input type="range" id="offY" min="0" max="1" step="0.01" value="0.5"></label>
+      <label><span data-i18n="maxW">Largeur max :</span> <b id="vMaxW">480</b> px<input type="range" id="maxW" min="160" max="1280" step="16" value="480"></label>
+      <h3 data-i18n="textH">💬 Texte (style mème)</h3>
+      <input type="text" id="txtTop" placeholder="Texte du haut" data-i18n-ph="phTop">
+      <input type="text" id="txtBot" placeholder="Texte du bas" data-i18n-ph="phBot">
       <div class="row">
         <select id="font">
-          <option value="Impact, Anton">Impact (mème classique)</option>
+          <option value="Impact, Anton" data-i18n="fontImpact">Impact (mème classique)</option>
           <option value="Anton">Anton</option>
           <option value="Bungee">Bungee</option>
-          <option value="Orbitron">Orbitron (cyber)</option>
-          <option value="'Press Start 2P'">Press Start (pixel)</option>
-          <option value="'Permanent Marker'">Marqueur</option>
+          <option value="Orbitron" data-i18n="fontOrb">Orbitron (cyber)</option>
+          <option value="'Press Start 2P'" data-i18n="fontPress">Press Start (pixel)</option>
+          <option value="'Permanent Marker'" data-i18n="fontMarker">Marqueur</option>
           <option value="Arial">Arial</option>
         </select>
-        <input type="color" id="txtColor" value="#ffffff" title="Couleur">
-        <label class="inline">Taille<input type="range" id="txtSize" min="4" max="20" value="10"></label>
+        <input type="color" id="txtColor" value="#ffffff" title="Couleur" data-i18n-title="color">
+        <label class="inline"><span data-i18n="size">Taille</span><input type="range" id="txtSize" min="4" max="20" value="10"></label>
       </div>
     </div>
 
     <div class="card">
-      <h2>3. Aperçu &amp; X</h2>
+      <h2 data-i18n="prevH">3. Aperçu &amp; X</h2>
       <div id="xBadge" class="badge">…</div>
       <div id="warn" class="warn" hidden>
-        <p>⚠️ <b>Ta vidéo est trop lourde pour X.</b> Pour respecter la limite, elle sera réduite et risque d'être pixelisée.</p>
+        <p>⚠️ <b>Ta vidéo est trop lourde pour X.</b><span data-i18n="warnRest"> Pour respecter la limite, elle sera réduite et risque d'être pixelisée.</span></p>
         <div class="row wrap">
-          <button class="btn sm" id="fixShorten">✂️ Raccourcir</button>
-          <button class="btn sm" id="fixFps">🎞️ Baisser la fluidité</button>
-          <button class="btn sm" id="fixCrop">🔲 Recadrer</button>
-          <button class="btn sm ghost" id="fixIgnore">Continuer quand même</button>
+          <button class="btn sm" id="fixShorten" data-i18n="fixShorten">✂️ Raccourcir</button>
+          <button class="btn sm" id="fixFps" data-i18n="fixFps">🎞️ Baisser la fluidité</button>
+          <button class="btn sm" id="fixCrop" data-i18n="fixCrop">🔲 Recadrer</button>
+          <button class="btn sm ghost" id="fixIgnore" data-i18n="fixIgnore">Continuer quand même</button>
         </div>
       </div>
-      <div class="meter"><span>Qualité estimée :</span><div class="bar"><i id="qBar"></i></div><b id="qLabel">—</b></div>
+      <div class="meter"><span data-i18n="qLbl">Qualité estimée :</span><div class="bar"><i id="qBar"></i></div><b id="qLabel">—</b></div>
       <p id="estInfo" class="muted"></p>
       <div class="compare">
-        <figure><figcaption>Avant (source recadrée)</figcaption><canvas id="cvBefore"></canvas></figure>
-        <figure><figcaption>Après (rendu GIF)</figcaption><canvas id="cvAfter"></canvas><img id="gifOut" hidden alt="GIF généré"></figure>
+        <figure><figcaption data-i18n="before">Avant (source recadrée)</figcaption><canvas id="cvBefore"></canvas></figure>
+        <figure><figcaption data-i18n="after">Après (rendu GIF)</figcaption><canvas id="cvAfter"></canvas><img id="gifOut" hidden alt="GIF généré" data-i18n-alt="gifAlt"></figure>
       </div>
-      <button class="btn big full" id="btnMake">🚀 Générer le GIF</button>
+      <button class="btn big full" id="btnMake" data-i18n="make">🚀 Générer le GIF</button>
       <div id="progress" hidden><div class="bar"><i id="pBar"></i></div><span id="pTxt"></span></div>
       <ul id="checks" class="checks"></ul>
       <div id="resultActions" class="row wrap" hidden>
-        <a class="btn" id="dlOut" download="neogif.gif">⬇️ Télécharger</a>
-        <button class="btn alt" id="toLib">📼 Publier dans la bibliothèque</button>
+        <a class="btn" id="dlOut" download="neogif.gif" data-i18n="download">⬇️ Télécharger</a>
+        <button class="btn alt" id="toLib" data-i18n="publish">📼 Publier dans la bibliothèque</button>
       </div>
     </div>
   </div>
@@ -106,24 +107,24 @@
 
 <section id="biblio" class="panel">
   <div class="card">
-    <h2>Téléverser un GIF</h2>
+    <h2 data-i18n="upH">Téléverser un GIF</h2>
     <input type="file" id="upGif" accept="image/gif">
-    <input type="text" id="upTitle" placeholder="Titre">
-    <input type="text" id="upTags" placeholder="Étiquettes : drôle, québec, chat">
-    <button class="btn" id="upBtn">➕ Ajouter</button>
+    <input type="text" id="upTitle" placeholder="Titre" data-i18n-ph="phTitle">
+    <input type="text" id="upTags" data-i18n-ph="phTags" placeholder="Étiquettes : drôle, québec, chat">
+    <button class="btn" id="upBtn" data-i18n="add">➕ Ajouter</button>
     <p id="upMsg" class="muted"></p>
   </div>
-  <input type="search" id="search" class="search" placeholder="🔍 Rechercher par titre ou étiquette…">
-  <h2 class="neon">🔥 Tendances</h2>
+  <input type="search" id="search" class="search" data-i18n-ph="phSearch" placeholder="🔍 Rechercher par titre ou étiquette…">
+  <h2 class="neon" data-i18n="trending">🔥 Tendances</h2>
   <div id="trending" class="grid"></div>
-  <h2 class="neon">🕹️ Tous les GIF</h2>
+  <h2 class="neon" data-i18n="all">🕹️ Tous les GIF</h2>
   <div id="allGifs" class="grid"></div>
-  <p class="muted small">Prototype : la bibliothèque est stockée sur cet appareil (IndexedDB). « Partager sur X » ouvre X avec un texte prêt ; tu dois joindre le GIF téléchargé toi-même.</p>
+  <p class="muted small" data-i18n="libNote">Prototype : la bibliothèque est stockée sur cet appareil (IndexedDB). « Partager sur X » ouvre X avec un texte prêt ; tu dois joindre le GIF téléchargé toi-même.</p>
 </section>
 </main>
 <dialog id="modal"><form method="dialog"><img id="mImg" alt=""><h3 id="mTitle"></h3><p id="mTags"></p><p id="mMeta" class="muted small"></p>
-<div class="row wrap"><a class="btn" id="mDl" download>⬇️ Télécharger</a><a class="btn alt" id="mX" target="_blank" rel="noopener">𝕏 Partager sur X</a><button class="btn ghost" id="mDel" value="del">🗑️</button><button class="btn ghost" value="close">Fermer</button></div>
-<p class="muted small">Sur X : télécharge d'abord le GIF, puis joins-le à ton message.</p></form></dialog>
+<div class="row wrap"><a class="btn" id="mDl" download data-i18n="download">⬇️ Télécharger</a><a class="btn alt" id="mX" target="_blank" rel="noopener" data-i18n="share">𝕏 Partager sur X</a><button class="btn ghost" id="mDel" value="del">🗑️</button><button class="btn ghost" value="close" data-i18n="close">Fermer</button></div>
+<p class="muted small" data-i18n="xNote">Sur X : télécharge d'abord le GIF, puis joins-le à ton message.</p></form></dialog>
 <script type="module" src="app.js"></script>
 </body>
 </html>

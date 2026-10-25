@@ -1,9 +1,16 @@
 import { GIFEncoder, quantize, applyPalette } from './gifenc.js';
+import { t, lang, LANGS, setLang, applyI18n } from './i18n.js';
 import { X_LIMITS, validateX, planOutput, frameCount, parseTags, matches, trendScore, xIntentUrl } from './core.js';
 
 const $ = id => document.getElementById(id);
 const S = { src: null, crop: 'orig', ignoreWarn: false, out: null, busy: false };
 window.NEOGIF = S; // pour les tests
+let lastBadge = null, lastQ = null;
+const langSel = $('langSel');
+langSel.innerHTML = Object.entries(LANGS).map(([k, [n]]) => `<option value="${k}">${n}</option>`).join('');
+langSel.value = lang; applyI18n();
+langSel.onchange = () => { setLang(langSel.value); if (S.src) update(); if (lastBadge) setBadge(...lastBadge); if (lastQ) setQuality(lastQ);
+  if ($('biblio').classList.contains('active')) renderLib(); };
 
 // ---------- Onglets ----------
 document.querySelectorAll('.tab').forEach(b => b.onclick = () => {
@@ -17,19 +24,19 @@ $('inVideo').onchange = async e => {
   const f = e.target.files[0]; if (!f) return;
   const v = document.createElement('video');
   v.muted = true; v.playsInline = true; v.preload = 'auto'; v.src = URL.createObjectURL(f);
-  await new Promise((r, j) => { v.onloadeddata = r; v.onerror = () => j(new Error('Format vidéo non supporté par ce navigateur')); })
+  await new Promise((r, j) => { v.onloadeddata = r; v.onerror = () => j(new Error(t('videoErr'))); })
     .catch(err => { alert(err.message); throw err; });
   S.src = { type: 'video', el: v, w: v.videoWidth, h: v.videoHeight, dur: v.duration, name: f.name };
   $('tStart').max = $('tEnd').max = v.duration.toFixed(1);
   $('tStart').value = 0; $('tEnd').value = Math.min(v.duration, 6).toFixed(1);
-  $('srcInfo').textContent = `🎬 ${f.name} — ${v.videoWidth}×${v.videoHeight}, ${v.duration.toFixed(1)} s, ${(f.size/1e6).toFixed(1)} Mo`;
+  $('srcInfo').textContent = `🎬 ${f.name} — ${v.videoWidth}×${v.videoHeight}, ${v.duration.toFixed(1)} s, ${(f.size/1e6).toFixed(1)} ${t('mb')}`; $('srcInfo').removeAttribute('data-i18n');
   openEditor();
 };
 $('inImages').onchange = async e => {
   const files = [...e.target.files]; if (!files.length) return;
   const imgs = await Promise.all(files.map(f => createImageBitmap(f)));
   S.src = { type: 'images', imgs, w: imgs[0].width, h: imgs[0].height, name: files[0].name };
-  $('srcInfo').textContent = `🖼️ ${imgs.length} image(s) — ${imgs[0].width}×${imgs[0].height}`;
+  $('srcInfo').textContent = `🖼️ ${imgs.length} ${t('images')} — ${imgs[0].width}×${imgs[0].height}`; $('srcInfo').removeAttribute('data-i18n');
   openEditor();
 };
 function openEditor() {
@@ -93,10 +100,10 @@ function update() {
   // Indicateur X (estimé)
   setBadge(validateX({ bytes: pl.estBytes, width: pl.width, height: pl.height, frames: pl.frames }), true);
   $('warn').hidden = !(pl.heavy && !S.ignoreWarn);
-  $('warn').querySelector('b').textContent = S.src.type === 'video' ? 'Ta vidéo est trop lourde pour X.' : 'Ton GIF est trop lourd pour X.';
+  $('warn').querySelector('b').textContent = t(S.src.type === 'video' ? 'warnVideo' : 'warnGif');
   setQuality(pl.quality);
-  $('estInfo').textContent = `Sortie prévue : ${pl.width}×${pl.height}, ${pl.frames} images${pl.framesCapped ? ' (plafonné à 350)' : ''}, ~${(pl.estBytes/1e6).toFixed(1)} Mo estimés` +
-    (pl.reduction < 1 ? ` — réduction forcée à ${Math.round(pl.reduction * 100)} % de la taille voulue (${pl.wantedW}×${pl.wantedH}).` : '.');
+  $('estInfo').textContent = t('est', { w: pl.width, h: pl.height, n: pl.frames, cap: pl.framesCapped ? t('capped') : '', mb: (pl.estBytes/1e6).toFixed(1), u: t('mb') }) +
+    (pl.reduction < 1 ? t('reduced', { p: Math.round(pl.reduction * 100), w: pl.wantedW, h: pl.wantedH }) : '.');
   clearTimeout(tmr); tmr = setTimeout(() => drawPreviews(p, pl), 60);
 }
 async function drawPreviews(p, pl) {
@@ -109,12 +116,12 @@ async function drawPreviews(p, pl) {
     a.width = pl.width; a.height = pl.height; drawFrame(a.getContext('2d'), el, src.w, src.h, pl.width, pl.height, p); }
 }
 function setBadge(v, estimated) {
-  const el = $('xBadge'); el.className = 'badge ' + (v.ok ? 'ok' : 'ko');
-  el.textContent = v.ok ? `Prêt pour X ✅${estimated ? ' (estimé)' : ''}` : `Pas prêt pour X ❌${estimated ? ' (estimé)' : ''}`;
-  $('checks').innerHTML = v.checks.map(c => `<li>${c.ok ? '✅' : '❌'} ${c.label} — <b>${c.val}</b></li>`).join('');
+  lastBadge = [v, estimated]; const el = $('xBadge'); el.className = 'badge ' + (v.ok ? 'ok' : 'ko');
+  el.textContent = t(v.ok ? 'ready' : 'notReady') + (estimated ? t('estimated') : '');
+  $('checks').innerHTML = v.checks.map(c => `<li>${c.ok ? '✅' : '❌'} ${t('chk_' + c.key)} — <b>${c.val}</b></li>`).join('');
 }
 function setQuality(q) {
-  $('qLabel').textContent = q; $('qBar').style.width = { Excellente: '100%', Correcte: '60%', 'Pixelisée': '25%' }[q];
+  lastQ = q; $('qLabel').textContent = t('q_' + q); $('qBar').style.width = { Excellente: '100%', Correcte: '60%', 'Pixelisée': '25%' }[q];
   $('qLabel').style.color = { Excellente: '#7dffc4', Correcte: '#ffe600', 'Pixelisée': '#ff6b8b' }[q];
 }
 function resetOut() { S.out = null; $('resultActions').hidden = true; $('gifOut').hidden = true; $('cvAfter').hidden = false; }
@@ -154,7 +161,7 @@ $('btnMake').onclick = async () => {
     await document.fonts.load(`20px ${p.font.split(',')[0]}`).catch(() => {});
     for (let attempt = 1; attempt <= 4; attempt++) {
       pl = currentPlan(p, scale);
-      bytes = await encode(p, pl, f => { $('pBar').style.width = (f * 100) + '%'; $('pTxt').textContent = `Essai ${attempt} : ${Math.round(f * 100)} %`; });
+      bytes = await encode(p, pl, f => { $('pBar').style.width = (f * 100) + '%'; $('pTxt').textContent = t('attempt', { a: attempt, p: Math.round(f * 100) }); });
       if (bytes.length <= X_LIMITS.maxBytes) break;
       scale *= Math.sqrt(X_LIMITS.maxBytes * 0.93 / bytes.length); // trop lourd : on réduit et on recommence
     }
@@ -167,14 +174,14 @@ $('btnMake').onclick = async () => {
     setBadge(v, false);
     const red = Math.min(1, pl.width / pl.wantedW);
     setQuality(red >= .75 && Math.min(pl.width, pl.height) >= 360 ? 'Excellente' : (red >= .45 && Math.min(pl.width, pl.height) >= 220 ? 'Correcte' : 'Pixelisée'));
-    $('pTxt').textContent = `Terminé : ${(bytes.length / 1e6).toFixed(2)} Mo, ${pl.width}×${pl.height}, ${pl.frames} images`;
-  } catch (e) { $('pTxt').textContent = 'Erreur : ' + e.message; console.error(e); }
+    $('pTxt').textContent = t('done', { mb: (bytes.length / 1e6).toFixed(2), u: t('mb'), w: pl.width, h: pl.height, n: pl.frames });
+  } catch (e) { $('pTxt').textContent = t('error') + e.message; console.error(e); }
   S.busy = false; $('btnMake').disabled = false;
 };
 $('toLib').onclick = async () => {
-  if (!S.out) return; const title = prompt('Titre du GIF :', (S.src.name || 'Mon GIF').replace(/\.\w+$/, '')); if (title === null) return;
-  const tags = parseTags(prompt('Étiquettes (séparées par des virgules) :', 'néon, québec') || '');
-  await addGif({ title, tags, ...S.out }); alert('Publié dans ta bibliothèque 🎉');
+  if (!S.out) return; const title = prompt(t('promptTitle'), (S.src.name || t('myGif')).replace(/\.\w+$/, '')); if (title === null) return;
+  const tags = parseTags(prompt(t('promptTags'), t('defTags')) || '');
+  await addGif({ title, tags, ...S.out }); alert(t('published'));
 };
 
 // ---------- Bibliothèque (IndexedDB) ----------
@@ -193,11 +200,11 @@ async function gifSize(blob) { const img = new Image(); img.src = URL.createObje
 function countFrames(buf) { // compte les descripteurs d'image (approx. rapide)
   const b = new Uint8Array(buf); let n = 0; for (let i = 0; i < b.length - 9; i++) if (b[i] === 0x21 && b[i + 1] === 0xF9 && b[i + 2] === 4) n++; return Math.max(1, n); }
 $('upBtn').onclick = async () => {
-  const f = $('upGif').files[0]; if (!f) return $('upMsg').textContent = 'Choisis un fichier GIF.';
+  const f = $('upGif').files[0]; if (!f) return $('upMsg').textContent = t('chooseGif');
   const [w, h] = await gifSize(f), frames = countFrames(await f.arrayBuffer());
   await addGif({ title: $('upTitle').value || f.name.replace(/\.gif$/i, ''), tags: parseTags($('upTags').value), blob: f, width: w, height: h, frames, bytes: f.size });
   const v = validateX({ bytes: f.size, width: w, height: h, frames });
-  $('upMsg').textContent = `Ajouté ! ${v.ok ? 'Prêt pour X ✅' : 'Pas prêt pour X ❌ (' + v.checks.filter(c => !c.ok).map(c => c.label).join(', ') + ')'}`;
+  $('upMsg').textContent = t('added') + (v.ok ? t('ready') : t('notReady') + ' (' + v.checks.filter(c => !c.ok).map(c => t('chk_' + c.key)).join(', ') + ')');
   $('upTitle').value = $('upTags').value = ''; $('upGif').value = ''; renderLib();
 };
 $('search').oninput = () => renderLib();
@@ -207,8 +214,8 @@ async function renderLib() {
   const items = await allGifs(), q = $('search').value, list = items.filter(i => matches(i, q));
   const tile = g => { const u = URL.createObjectURL(g.blob); urls.push(u);
     return `<div class="tile" data-id="${g.id}"><img loading="lazy" src="${u}" alt=""><span>${esc(g.title)}</span></div>`; };
-  $('trending').innerHTML = [...list].sort((a, b) => trendScore(b) - trendScore(a)).slice(0, 6).map(tile).join('') || '<p class="muted">Rien encore — crée ou téléverse ton premier GIF !</p>';
-  $('allGifs').innerHTML = [...list].sort((a, b) => b.created - a.created).map(tile).join('') || '<p class="muted">Aucun résultat.</p>';
+  $('trending').innerHTML = [...list].sort((a, b) => trendScore(b) - trendScore(a)).slice(0, 6).map(tile).join('') || `<p class="muted">${t('emptyTrend')}</p>`;
+  $('allGifs').innerHTML = [...list].sort((a, b) => b.created - a.created).map(tile).join('') || `<p class="muted">${t('noResult')}</p>`;
   document.querySelectorAll('.tile').forEach(t => t.onclick = () => openGif(items.find(i => i.id === +t.dataset.id)));
 }
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -216,11 +223,11 @@ async function openGif(g) {
   g.views++; await putGif(g);
   const u = URL.createObjectURL(g.blob), v = validateX(g);
   $('mImg').src = u; $('mTitle').textContent = g.title; $('mTags').textContent = g.tags.map(t => '#' + t).join(' ');
-  $('mMeta').textContent = `${g.width}×${g.height} · ${g.frames} images · ${(g.bytes / 1e6).toFixed(2)} Mo · ${g.views} vues · ${v.ok ? 'Prêt pour X ✅' : 'Pas prêt pour X ❌'}`;
+  $('mMeta').textContent = `${g.width}×${g.height} · ${g.frames} ${t('frames')} · ${(g.bytes / 1e6).toFixed(2)} ${t('mb')} · ${g.views} ${t('views')} · ${t(v.ok ? 'ready' : 'notReady')}`;
   $('mDl').href = u; $('mDl').download = g.title.replace(/[^\w\- ]+/g, '') + '.gif';
   $('mDl').onclick = () => { g.downloads++; putGif(g); };
   $('mX').href = xIntentUrl(`${g.title} ${g.tags.slice(0, 3).map(t => '#' + t.replace(/[^\p{L}\p{N}_]/gu, '')).join(' ')}`);
   $('mX').onclick = () => { g.shares = (g.shares || 0) + 1; putGif(g); };
-  $('mDel').onclick = async () => { if (confirm('Supprimer ce GIF ?')) { await tx('readwrite', s => s.delete(g.id)); renderLib(); } };
+  $('mDel').onclick = async () => { if (confirm(t('confirmDel'))) { await tx('readwrite', s => s.delete(g.id)); renderLib(); } };
   $('modal').showModal(); $('modal').onclose = () => renderLib();
 }
