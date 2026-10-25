@@ -68,3 +68,9 @@ dialog::backdrop{background:#000b}dialog img{width:100%;border-radius:8px}
 
 .fab{position:fixed;right:18px;bottom:22px;z-index:50;padding:14px 22px;border-radius:999px;border:2px solid #ff2fd6;background:#ff2fd6;color:#fff;font-weight:800;font-size:1.05rem;box-shadow:0 0 18px #ff2fd6aa,0 0 40px #ff2fd655;cursor:pointer}
 .fab[hidden]{display:none}
+
+.fxCard{border-color:#ff2bd688;box-shadow:0 0 22px #ff2bd633,inset 0 0 24px #00f0ff14}
+#fxChips{display:grid;grid-template-columns:repeat(2,1fr);gap:.45rem;margin-bottom:.6rem}
+@media(min-width:600px){#fxChips{grid-template-columns:repeat(4,1fr)}}
+#fxChips .chip{padding:.75rem .4rem;font-size:.9rem;border-color:var(--cyan);background:#00f0ff14;text-shadow:0 0 6px #00f0ff88}
+#fxChips .chip.active{background:linear-gradient(135deg,var(--pink),#7b2bff);border-color:var(--pink);box-shadow:0 0 14px var(--pink),0 0 28px #ff2bd655}

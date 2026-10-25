@@ -1,9 +1,10 @@
-import { GIFEncoder, quantize, applyPalette } from './gifenc.js';
-import { t, lang, LANGS, setLang, applyI18n } from './i18n.js';
-import { X_LIMITS, validateX, planOutput, frameCount, parseTags, matches, trendScore, xIntentUrl } from './core.js';
+import { GIFEncoder, quantize, applyPalette } from './gifenc.js?v=9';
+import { t, lang, LANGS, setLang, applyI18n } from './i18n.js?v=9';
+import { FX, fxTransform, fxApply } from './effects.js?v=9';
+import { X_LIMITS, validateX, planOutput, frameCount, parseTags, matches, trendScore, xIntentUrl } from './core.js?v=9';
 
 const $ = id => document.getElementById(id);
-const S = { src: null, crop: 'orig', ignoreWarn: false, out: null, busy: false };
+const S = { fx: [], src: null, crop: 'orig', ignoreWarn: false, out: null, busy: false };
 window.NEOGIF = S; // pour les tests
 let lastBadge = null, lastQ = null;
 const langSel = $('langSel');
@@ -41,7 +42,7 @@ $('inImages').onchange = async e => {
 };
 function openEditor() {
   const isV = S.src.type === 'video';
-  $('editor').hidden = false; $('videoOpts').hidden = !isV; $('imageOpts').hidden = isV; $('fpsWrap').hidden = !isV;
+  $('editor').hidden = false; $('videoOpts').hidden = !isV; $('imageOpts').hidden = isV; $('fpsWrap').hidden = !isV; $('fxCard').hidden = isV;
   S.ignoreWarn = false; resetOut(); update();
 }
 
@@ -50,13 +51,21 @@ const P = () => ({
   start: +$('tStart').value, end: +$('tEnd').value, fps: +$('fps').value, speed: +$('speed').value,
   delay: +$('imgDelay').value, zoom: +$('zoom').value, offX: +$('offX').value, offY: +$('offY').value,
   ratio: +$('ratio').value, maxW: +$('maxW').value,
+  fx: S.src?.type === 'images' ? S.fx.slice() : [], fxI: +$('fxInt').value, fxDur: +$('fxDur').value, fxFps: +$('fxFps').value,
   top: $('txtTop').value, bot: $('txtBot').value, font: $('font').value, color: $('txtColor').value, size: +$('txtSize').value,
 });
 document.querySelectorAll('#cropChips .chip').forEach(c => c.onclick = () => {
   document.querySelectorAll('#cropChips .chip').forEach(x => x.classList.remove('active'));
   c.classList.add('active'); S.crop = c.dataset.crop; $('freeCrop').hidden = S.crop !== 'free'; update();
 });
-['tStart','tEnd','fps','speed','imgDelay','zoom','offX','offY','ratio','maxW','txtTop','txtBot','font','txtColor','txtSize']
+// ---------- Effets ----------
+$('fxChips').innerHTML = FX.map(k => `<button class="chip fx" data-fx="${k}" data-i18n="fx_${k}">${t('fx_' + k)}</button>`).join('');
+document.querySelectorAll('#fxChips .chip').forEach(c => c.onclick = () => { const k = c.dataset.fx, i = S.fx.indexOf(k);
+  if (i >= 0) S.fx.splice(i, 1); else { S.fx.push(k); if (S.fx.length > 2) S.fx.shift(); }
+  document.querySelectorAll('#fxChips .chip').forEach(x => x.classList.toggle('active', S.fx.includes(x.dataset.fx)));
+  $('fxOpts').hidden = !S.fx.length; resetOut(); update(); });
+$('fxNone').onclick = () => { S.fx = []; document.querySelectorAll('#fxChips .chip').forEach(x => x.classList.remove('active')); $('fxOpts').hidden = true; resetOut(); update(); };
+['tStart','tEnd','fxInt','fxDur','fxFps','fps','speed','imgDelay','zoom','offX','offY','ratio','maxW','txtTop','txtBot','font','txtColor','txtSize']
   .forEach(id => $(id).addEventListener('input', () => { if (id === 'tStart' && +$('tStart').value > +$('tEnd').value - .2) $('tEnd').value = Math.min(+$('tEnd').max, +$('tStart').value + .2); resetOut(); update(); }));
 
 function cropRect(sw, sh, p) {
@@ -66,6 +75,7 @@ function cropRect(sw, sh, p) {
   return { x: (sw - w) * p.offX, y: (sh - h) * p.offY, w, h };
 }
 function nFrames(p) {
+  if (p.fx.length) return Math.max(2, Math.round(p.fxDur * p.fxFps));
   return S.src.type === 'video' ? frameCount(Math.max(.1, p.end - p.start), p.fps, p.speed) : S.src.imgs.length;
 }
 function currentPlan(p = P(), scaleOverride = 1) {
@@ -76,11 +86,14 @@ function currentPlan(p = P(), scaleOverride = 1) {
 }
 
 // ---------- Dessin ----------
-function drawFrame(ctx, source, sw, sh, W, H, p) {
+function drawFrame(ctx, source, sw, sh, W, H, p, ph = 0, f = 0) {
   const c = cropRect(sw, sh, p);
   ctx.imageSmoothingQuality = 'high';
   ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
-  ctx.drawImage(source, c.x, c.y, c.w, c.h, 0, 0, W, H);
+  const fx = p.fx || [];
+  ctx.save(); if (fx.length) fxTransform(ctx, W, H, fx, p.fxI, ph, f);
+  ctx.drawImage(source, c.x, c.y, c.w, c.h, 0, 0, W, H); ctx.restore();
+  if (fx.length) fxApply(ctx, W, H, fx, p.fxI, ph, f);
   const fs = Math.max(10, Math.round(H * p.size / 100));
   ctx.font = `${fs}px ${p.font}, Impact, sans-serif`; ctx.textAlign = 'center';
   ctx.lineJoin = 'round'; ctx.lineWidth = Math.max(2, fs / 7); ctx.strokeStyle = '#000'; ctx.fillStyle = p.color;
@@ -97,6 +110,7 @@ function update() {
   $('vStart').textContent = p.start.toFixed(1); $('vEnd').textContent = p.end.toFixed(1); $('vFps').textContent = p.fps;
   $('vSpeed').textContent = p.speed; $('vDelay').textContent = p.delay; $('vZoom').textContent = p.zoom.toFixed(1);
   $('vRatio').textContent = p.ratio.toFixed(2); $('vMaxW').textContent = p.maxW;
+  $('vFxInt').textContent = Math.round(p.fxI * 100); $('vFxDur').textContent = p.fxDur.toFixed(1); $('vFxFps').textContent = p.fxFps;
   // Indicateur X (estimé)
   setBadge(validateX({ bytes: pl.estBytes, width: pl.width, height: pl.height, frames: pl.frames }), true);
   $('warn').hidden = !(pl.heavy && !S.ignoreWarn);
@@ -135,6 +149,12 @@ function tick(now) {
   let el;
   if (src.type === 'video') { el = PV.vid; if (!el || el.readyState < 2) return;
     if (el.currentTime >= p.end - .02 || el.currentTime < p.start - .05 || el.ended) { el.currentTime = p.start; el.play().catch(() => {}); }
+  } else if (p.fx.length) {
+    const n = Math.max(2, Math.round(p.fxDur * p.fxFps)), f = Math.floor((now / 1000 % p.fxDur) * p.fxFps) % n;
+    el = src.imgs[Math.floor(f * (1000 / p.fxFps) / p.delay) % src.imgs.length];
+    const b = $('cvBefore'); drawFrame(b.getContext('2d'), el, src.w, src.h, b.width, b.height, { ...p, fx: [] });
+    if (!S.out && f !== PV.lastF) { PV.lastF = f; PV.frames = (PV.frames || 0) + 1; const a = $('cvAfter'); drawFrame(a.getContext('2d'), el, src.w, src.h, a.width, a.height, p, f / n, f); }
+    return;
   } else {
     if (now - PV.lastI >= p.delay / p.speed) { PV.img = (PV.img + 1) % src.imgs.length; PV.lastI = now; }
     el = src.imgs[PV.img % src.imgs.length];
@@ -172,8 +192,9 @@ async function encode(p, pl, onProg) {
   for (let i = 0; i < n; i++) {
     let el, delay;
     if (src.type === 'video') { el = src.el; await seek(el, Math.min(src.dur - .01, p.start + i * p.speed / p.fps)); delay = 1000 / p.fps; }
+    else if (p.fx.length) { delay = 1000 / p.fxFps; el = src.imgs[Math.floor(i * delay / p.delay) % src.imgs.length]; }
     else { el = src.imgs[i]; delay = p.delay / p.speed; }
-    drawFrame(ctx, el, el.videoWidth || el.width, el.videoHeight || el.height, W, H, p);
+    drawFrame(ctx, el, el.videoWidth || el.width, el.videoHeight || el.height, W, H, p, i / n, i);
     const { data } = ctx.getImageData(0, 0, W, H);
     const palette = quantize(data, 256); const idx = applyPalette(data, palette);
     gif.writeFrame(idx, W, H, { palette, delay: Math.max(20, Math.round(delay)) });
