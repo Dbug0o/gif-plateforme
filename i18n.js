@@ -105,3 +105,8 @@ Object.assign(D.en, { install:'📲 Install', iosTip:'📲 To install Neo GIF: t
 Object.assign(D.es, { install:'📲 Instalar', iosTip:'📲 Para instalar Neo GIF: toca Compartir > Añadir a pantalla de inicio.' });
 Object.assign(D.ja, { install:'📲 インストール', iosTip:'📲 Neo GIFをインストール：共有 > ホーム画面に追加 をタップ。' });
 Object.assign(D.pt, { install:'📲 Instalar', iosTip:'📲 Para instalar o Neo GIF: toque em Compartilhar > Adicionar à Tela de Início.' });
+Object.assign(D.fr, { loadMore:'Voir plus' });
+Object.assign(D.en, { loadMore:'Load more' });
+Object.assign(D.es, { loadMore:'Ver más' });
+Object.assign(D.ja, { loadMore:'もっと見る' });
+Object.assign(D.pt, { loadMore:'Ver mais' });

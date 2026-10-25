@@ -1,7 +1,7 @@
-import { GIFEncoder, quantize, applyPalette } from './gifenc.js?v=15';
-import { t, lang, LANGS, setLang, applyI18n } from './i18n.js?v=15';
-import { FX, fxTransform, fxApply } from './effects.js?v=15';
-import { X_LIMITS, validateX, planOutput, frameCount, parseTags, matches, trendScore, xIntentUrl } from './core.js?v=15';
+import { GIFEncoder, quantize, applyPalette } from './gifenc.js?v=16';
+import { t, lang, LANGS, setLang, applyI18n } from './i18n.js?v=16';
+import { FX, fxTransform, fxApply } from './effects.js?v=16';
+import { X_LIMITS, validateX, planOutput, frameCount, parseTags, matches, trendScore, xIntentUrl } from './core.js?v=16';
 
 const $ = id => document.getElementById(id);
 const S = { fx: [], src: null, crop: 'orig', ignoreWarn: false, out: null, busy: false };
@@ -17,7 +17,7 @@ langSel.onchange = () => { setLang(langSel.value); if (S.src) update(); if (last
 document.querySelectorAll('.tab').forEach(b => b.onclick = () => {
   document.querySelectorAll('.tab,.panel').forEach(e => e.classList.remove('active'));
   b.classList.add('active'); $(b.dataset.tab).classList.add('active');
-  if (b.dataset.tab === 'biblio') renderLib();
+  if (b.dataset.tab === 'biblio') renderLib(); else clearLib();
 });
 
 // ---------- Sources ----------
@@ -147,7 +147,7 @@ async function drawPreviews(p, pl) {
 }
 function tick(now) {
   PV.raf = requestAnimationFrame(tick);
-  const p = PV.p, pl = PV.pl, src = S.src; if (!p || !src || document.hidden) return;
+  const p = PV.p, pl = PV.pl, src = S.src; if (!p || !src || document.hidden || S.busy) return; // aperçu en pause pendant l'encodage
   let el;
   if (src.type === 'video') { el = PV.vid; if (!el || el.readyState < 2) return;
     if (el.currentTime >= p.end - .02 || el.currentTime < p.start - .05 || el.ended) { el.currentTime = p.start; el.play().catch(() => {}); }
@@ -210,7 +210,7 @@ async function encode(p, pl, onProg) {
   gif.finish(); return gif.bytes();
 }
 $('btnMake').onclick = async () => {
-  if (!S.src || S.busy) return; S.busy = true; $('btnMake').disabled = true; $('progress').hidden = false;
+  if (!S.src || S.busy) return; S.busy = true; PV.vid?.pause?.(); $('btnMake').disabled = true; $('progress').hidden = false;
   const p = P(); let scale = 1, bytes, pl;
   try {
     await document.fonts.load(`20px ${p.font.split(',')[0]}`).catch(() => {});
@@ -231,7 +231,7 @@ $('btnMake').onclick = async () => {
     setQuality(red >= .75 && Math.min(pl.width, pl.height) >= 360 ? 'Excellente' : (red >= .45 && Math.min(pl.width, pl.height) >= 220 ? 'Correcte' : 'Pixelisée'));
     $('pTxt').textContent = t('done', { mb: (bytes.length / 1e6).toFixed(2), u: t('mb'), w: pl.width, h: pl.height, n: pl.frames });
   } catch (e) { $('pTxt').textContent = t('error') + e.message; console.error(e); }
-  S.busy = false; $('btnMake').disabled = false;
+  S.busy = false; $('btnMake').disabled = false; PV.vid?.play?.().catch(() => {});
 };
 const renderTags = () => { $('tagPrev').innerHTML = parseTags($('gifTags').value).map(x => `<span class="tagPill">${esc(x)}</span>`).join(''); };
 $('gifTags').addEventListener('input', renderTags);
@@ -242,7 +242,7 @@ $('toLib').onclick = async () => {
   $('toLib').disabled = true;
   try { await addGif({ title: outTitle(), tags: parseTags($('gifTags').value), ...o }); }
   catch (e) { $('libMsg').textContent = t('error') + e.message; $('toLib').disabled = false; return; }
-  S.out.saved = true; $('libMsg').textContent = t('libSaved', { t: outTitle() }); renderLib();
+  S.out.saved = true; $('libMsg').textContent = t('libSaved', { t: outTitle() }); LIB.at = 0;
 };
 $('shareOut').onclick = async () => {
   if (!S.out) return; const f = new File([S.out.blob], (outTitle().replace(/[^\w\- ]+/g, '') || 'neogif') + '.gif', { type: 'image/gif' });
@@ -302,18 +302,33 @@ $('upBtn').onclick = async () => {
   catch (e) { $('upMsg').textContent = t('error') + e.message; return; } finally { $('upBtn').disabled = false; }
   const v = validateX({ bytes: f.size, width: w, height: h, frames });
   $('upMsg').textContent = t('added') + (v.ok ? t('ready') : t('notReady') + ' (' + v.checks.filter(c => !c.ok).map(c => t('chk_' + c.key)).join(', ') + ')');
-  $('upTitle').value = $('upTags').value = ''; $('upGif').value = ''; renderLib();
+  $('upTitle').value = $('upTags').value = ''; $('upGif').value = ''; renderLib({ force: true });
 };
-$('search').oninput = () => renderLib();
+$('search').oninput = () => { LIB.shown = PAGE; renderLib({ cached: true }); };
 let mine = new Set();
-async function renderLib() {
+// Bibliothèque : chargée seulement quand l'onglet est visible, mise en cache 60 s, affichée par pages de 40
+const PAGE = 40, LIB = { items: null, at: 0, shown: PAGE, p: null };
+const libVisible = () => $('biblio').classList.contains('active');
+function clearLib() { $('trending').innerHTML = ''; $('allGifs').innerHTML = ''; } // libère les GIF animés décodés
+async function loadLib(force) {
+  if (!force && LIB.items && Date.now() - LIB.at < 60e3) return LIB.items;
+  if (!LIB.p) LIB.p = allGifs().then(items => { LIB.items = items; LIB.at = Date.now();
+    rpc('is_mine', { gif_ids: items.map(i => i.id), token: OWNER }).then(ids => { mine = new Set(ids || []); }).catch(() => {});
+    return items; }).finally(() => { LIB.p = null; });
+  return LIB.p;
+}
+async function renderLib({ cached = false, force = false } = {}) {
+  if (!libVisible()) return;
   let items;
-  try { items = await allGifs(); } catch (e) { $('allGifs').innerHTML = `<p class="muted">${esc(t('netErr'))}</p>`; console.error(e); return; }
-  rpc('is_mine', { gif_ids: items.map(i => i.id), token: OWNER }).then(ids => { mine = new Set(ids || []); }).catch(() => {});
+  try { items = cached && LIB.items ? LIB.items : await loadLib(force); } catch (e) { $('allGifs').innerHTML = `<p class="muted">${esc(t('netErr'))}</p>`; console.error(e); return; }
+  if (!libVisible()) return;
   const q = $('search').value, list = items.filter(i => matches(i, q));
-  const tile = g => `<div class="tile" data-id="${g.id}"><img loading="lazy" src="${g.url}" alt=""><span>${esc(g.title)}</span></div>`;
+  const tile = g => `<div class="tile" data-id="${g.id}"><img loading="lazy" decoding="async" src="${g.url}" alt=""><span>${esc(g.title)}</span></div>`;
   $('trending').innerHTML = [...list].sort((a, b) => trendScore(b) - trendScore(a)).slice(0, 6).map(tile).join('') || `<p class="muted">${t('emptyTrend')}</p>`;
-  $('allGifs').innerHTML = [...list].sort((a, b) => b.created - a.created).map(tile).join('') || `<p class="muted">${t('noResult')}</p>`;
+  const sorted = [...list].sort((a, b) => b.created - a.created);
+  $('allGifs').innerHTML = (sorted.slice(0, LIB.shown).map(tile).join('') || `<p class="muted">${t('noResult')}</p>`)
+    + (sorted.length > LIB.shown ? `<button id="loadMore" class="btn alt" style="grid-column:1/-1">${esc(t('loadMore'))}</button>` : '');
+  if ($('loadMore')) $('loadMore').onclick = () => { LIB.shown += PAGE; renderLib({ cached: true }); };
   document.querySelectorAll('.tile').forEach(el => el.onclick = () => openGif(items.find(i => i.id === el.dataset.id)));
 }
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -339,8 +354,8 @@ async function openGif(g) {
   };
   $('mDel').style.display = mine.has(g.id) ? '' : 'none';
   $('mDel').onclick = async () => { if (!confirm(t('confirmDel'))) return;
-    try { await deleteGif(g); $('modal').close(); } catch (e) { alert(t('error') + e.message); } };
-  $('modal').showModal(); $('modal').onclose = () => renderLib();
+    try { await deleteGif(g); LIB.at = 0; $('modal').close(); } catch (e) { alert(t('error') + e.message); } };
+  $('modal').showModal(); $('modal').onclose = () => renderLib({ cached: !!LIB.at });
 }
 
 // ---------- Repères & préréglages ----------
