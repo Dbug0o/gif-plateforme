@@ -282,3 +282,4 @@ export function applyPreset(name) {
   if (S.src) { resetOut(); update(); }
 }
 document.querySelectorAll('#presets [data-preset]').forEach(b => b.onclick = () => applyPreset(b.dataset.preset));
+renderLib();
