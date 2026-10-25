@@ -283,3 +283,7 @@ export function applyPreset(name) {
 }
 document.querySelectorAll('#presets [data-preset]').forEach(b => b.onclick = () => applyPreset(b.dataset.preset));
 renderLib();
+
+{ const fab=$('fabCreate'); const sync=()=>{ fab.hidden=!$('biblio').classList.contains('active'); };
+  fab.onclick=()=>{ document.querySelector('.tab[data-tab="creer"]').click(); window.scrollTo({top:0,behavior:'smooth'}); sync(); };
+  document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',sync)); sync(); }
