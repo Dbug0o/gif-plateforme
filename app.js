@@ -1,7 +1,7 @@
-import { GIFEncoder, quantize, applyPalette } from './gifenc.js?v=17';
-import { t, lang, LANGS, setLang, applyI18n } from './i18n.js?v=17';
-import { FX, fxTransform, fxApply } from './effects.js?v=17';
-import { X_LIMITS, validateX, planOutput, frameCount, parseTags, matches, trendScore, xIntentUrl } from './core.js?v=17';
+import { GIFEncoder, quantize, applyPalette } from './gifenc.js?v=18';
+import { t, lang, LANGS, setLang, applyI18n } from './i18n.js?v=18';
+import { FX, fxTransform, fxApply } from './effects.js?v=18';
+import { X_LIMITS, validateX, planOutput, frameCount, parseTags, matches, trendScore, xIntentUrl } from './core.js?v=18';
 
 const $ = id => document.getElementById(id);
 const S = { fx: [], src: null, crop: 'orig', ignoreWarn: false, out: null, busy: false };
@@ -147,7 +147,7 @@ async function drawPreviews(p, pl) {
 }
 function tick(now) {
   PV.raf = requestAnimationFrame(tick);
-  const p = PV.p, pl = PV.pl, src = S.src; if (!p || !src || document.hidden || S.busy) return; // aperçu en pause pendant l'encodage
+  const p = PV.p, pl = PV.pl, src = S.src; if (!p || !src || document.hidden) return;
   let el;
   if (src.type === 'video') { el = PV.vid; if (!el || el.readyState < 2) return;
     if (el.currentTime >= p.end - .02 || el.currentTime < p.start - .05 || el.ended) { el.currentTime = p.start; el.play().catch(() => {}); }
@@ -210,7 +210,7 @@ async function encode(p, pl, onProg) {
   gif.finish(); return gif.bytes();
 }
 $('btnMake').onclick = async () => {
-  if (!S.src || S.busy) return; S.busy = true; PV.vid?.pause?.(); $('btnMake').disabled = true; $('progress').hidden = false;
+  if (!S.src || S.busy) return; S.busy = true; $('btnMake').disabled = true; $('progress').hidden = false;
   const p = P(); let scale = 1, bytes, pl;
   try {
     await document.fonts.load(`20px ${p.font.split(',')[0]}`).catch(() => {});
@@ -232,7 +232,7 @@ $('btnMake').onclick = async () => {
     setQuality(red >= .75 && Math.min(pl.width, pl.height) >= 360 ? 'Excellente' : (red >= .45 && Math.min(pl.width, pl.height) >= 220 ? 'Correcte' : 'Pixelisée'));
     $('pTxt').textContent = t('done', { mb: (bytes.length / 1e6).toFixed(2), u: t('mb'), w: pl.width, h: pl.height, n: pl.frames });
   } catch (e) { $('pTxt').textContent = t('error') + e.message; console.error(e); }
-  S.busy = false; $('btnMake').disabled = false; PV.vid?.play?.().catch(() => {});
+  S.busy = false; $('btnMake').disabled = false;
 };
 const renderTags = () => { $('tagPrev').innerHTML = parseTags($('gifTags').value).map(x => `<span class="tagPill">${esc(x)}</span>`).join(''); };
 $('gifTags').addEventListener('input', renderTags);
@@ -403,7 +403,9 @@ renderLib();
   document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',sync)); sync(); }
 
 // ---------- PWA : service worker, bouton Installer, astuce iOS ----------
-if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+// Pas de service worker : on désinstalle celui des versions 15-17 et on vide son cache
+if ('serviceWorker' in navigator) navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregister())).catch(() => {});
+if (window.caches) caches.keys().then(ks => ks.filter(k => k.startsWith('neogif-')).forEach(k => caches.delete(k))).catch(() => {});
 { const btn = $('btnInstall'); let deferred = null;
   const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
   window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); if (standalone()) return; deferred = e; btn.hidden = false; });
