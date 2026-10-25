@@ -250,11 +250,11 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;',
 async function openGif(g) {
   g.views++; await putGif(g);
   const u = URL.createObjectURL(g.blob), v = validateX(g);
-  $('mImg').src = u; $('mTitle').textContent = g.title; $('mTags').textContent = g.tags.map(t => '#' + t).join(' ');
+  $('mImg').src = u; $('mTitle').textContent = g.title; $('mTags').textContent = g.tags.join(' · ');
   $('mMeta').textContent = `${g.width}×${g.height} · ${g.frames} ${t('frames')} · ${(g.bytes / 1e6).toFixed(2)} ${t('mb')} · ${g.views} ${t('views')} · ${t(v.ok ? 'ready' : 'notReady')}`;
   $('mDl').href = u; $('mDl').download = g.title.replace(/[^\w\- ]+/g, '') + '.gif';
   $('mDl').onclick = () => { g.downloads++; putGif(g); };
-  $('mX').href = xIntentUrl(`${g.title} ${g.tags.slice(0, 3).map(t => '#' + t.replace(/[^\p{L}\p{N}_]/gu, '')).join(' ')}`);
+  $('mX').href = xIntentUrl(g.title);
   $('mX').onclick = () => { g.shares = (g.shares || 0) + 1; putGif(g); };
   $('mDel').onclick = async () => { if (confirm(t('confirmDel'))) { await tx('readwrite', s => s.delete(g.id)); renderLib(); } };
   $('modal').showModal(); $('modal').onclose = () => renderLib();
