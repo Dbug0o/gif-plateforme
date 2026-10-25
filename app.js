@@ -1,7 +1,7 @@
-import { GIFEncoder, quantize, applyPalette } from './gifenc.js?v=14';
-import { t, lang, LANGS, setLang, applyI18n } from './i18n.js?v=14';
-import { FX, fxTransform, fxApply } from './effects.js?v=14';
-import { X_LIMITS, validateX, planOutput, frameCount, parseTags, matches, trendScore, xIntentUrl } from './core.js?v=14';
+import { GIFEncoder, quantize, applyPalette } from './gifenc.js?v=15';
+import { t, lang, LANGS, setLang, applyI18n } from './i18n.js?v=15';
+import { FX, fxTransform, fxApply } from './effects.js?v=15';
+import { X_LIMITS, validateX, planOutput, frameCount, parseTags, matches, trendScore, xIntentUrl } from './core.js?v=15';
 
 const $ = id => document.getElementById(id);
 const S = { fx: [], src: null, crop: 'orig', ignoreWarn: false, out: null, busy: false };
@@ -363,3 +363,17 @@ renderLib();
 { const fab=$('fabCreate'); const sync=()=>{ fab.hidden=!$('biblio').classList.contains('active'); };
   fab.onclick=()=>{ document.querySelector('.tab[data-tab="creer"]').click(); window.scrollTo({top:0,behavior:'smooth'}); sync(); };
   document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',sync)); sync(); }
+
+// ---------- PWA : service worker, bouton Installer, astuce iOS ----------
+if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+{ const btn = $('btnInstall'); let deferred = null;
+  const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); if (standalone()) return; deferred = e; btn.hidden = false; });
+  btn.onclick = async () => { if (!deferred) return; deferred.prompt(); try { await deferred.userChoice; } catch {} deferred = null; btn.hidden = true; };
+  window.addEventListener('appinstalled', () => { deferred = null; btn.hidden = true; });
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  let seen = false; try { seen = localStorage.getItem('neogif-iostip') === '1'; } catch {}
+  if (ios && !standalone() && !seen) { $('iosTip').hidden = false;
+    try { localStorage.setItem('neogif-iostip', '1'); } catch {}
+    $('iosTipX').onclick = () => { $('iosTip').hidden = true; }; }
+}

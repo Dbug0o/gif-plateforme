@@ -100,3 +100,8 @@ Object.assign(D.en, { notGif:'This file is not a GIF.', tooBig:'GIF too large (m
 Object.assign(D.es, { notGif:'Este archivo no es un GIF.', tooBig:'GIF demasiado pesado (máx. 15 MB).', rateLimit:'Límite alcanzado: 20 GIF por hora. Inténtalo más tarde.', netErr:'No se pudo cargar la biblioteca en línea.' });
 Object.assign(D.ja, { notGif:'このファイルはGIFではありません。', tooBig:'GIFが大きすぎます（最大15MB）。', rateLimit:'上限に達しました：1時間に20個まで。後でもう一度お試しください。', netErr:'オンラインライブラリを読み込めませんでした。' });
 Object.assign(D.pt, { notGif:'Este arquivo não é um GIF.', tooBig:'GIF grande demais (máx. 15 MB).', rateLimit:'Limite atingido: 20 GIFs por hora. Tente mais tarde.', netErr:'Não foi possível carregar a biblioteca online.' });
+Object.assign(D.fr, { install:'📲 Installer', iosTip:'📲 Pour installer Neo GIF : touche Partager > Sur l’écran d’accueil.' });
+Object.assign(D.en, { install:'📲 Install', iosTip:'📲 To install Neo GIF: tap Share > Add to Home Screen.' });
+Object.assign(D.es, { install:'📲 Instalar', iosTip:'📲 Para instalar Neo GIF: toca Compartir > Añadir a pantalla de inicio.' });
+Object.assign(D.ja, { install:'📲 インストール', iosTip:'📲 Neo GIFをインストール：共有 > ホーム画面に追加 をタップ。' });
+Object.assign(D.pt, { install:'📲 Instalar', iosTip:'📲 Para instalar o Neo GIF: toque em Compartilhar > Adicionar à Tela de Início.' });
