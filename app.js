@@ -1,7 +1,7 @@
-import { GIFEncoder, quantize, applyPalette } from './gifenc.js?v=10';
-import { t, lang, LANGS, setLang, applyI18n } from './i18n.js?v=10';
-import { FX, fxTransform, fxApply } from './effects.js?v=10';
-import { X_LIMITS, validateX, planOutput, frameCount, parseTags, matches, trendScore, xIntentUrl } from './core.js?v=10';
+import { GIFEncoder, quantize, applyPalette } from './gifenc.js?v=14';
+import { t, lang, LANGS, setLang, applyI18n } from './i18n.js?v=14';
+import { FX, fxTransform, fxApply } from './effects.js?v=14';
+import { X_LIMITS, validateX, planOutput, frameCount, parseTags, matches, trendScore, xIntentUrl } from './core.js?v=14';
 
 const $ = id => document.getElementById(id);
 const S = { fx: [], src: null, crop: 'orig', ignoreWarn: false, out: null, busy: false };
@@ -239,8 +239,10 @@ $('gifTitle').addEventListener('input', () => { if (S.out) S.out.saved = false; 
 const outTitle = () => $('gifTitle').value.trim() || (S.src?.name || t('myGif')).replace(/\.\w+$/, '');
 $('toLib').onclick = async () => {
   if (!S.out || S.out.saved) return; const { saved, ...o } = S.out;
-  await addGif({ title: outTitle(), tags: parseTags($('gifTags').value), ...o }); S.out.saved = true;
-  $('libMsg').textContent = t('libSaved', { t: outTitle() }); $('toLib').disabled = true;
+  $('toLib').disabled = true;
+  try { await addGif({ title: outTitle(), tags: parseTags($('gifTags').value), ...o }); }
+  catch (e) { $('libMsg').textContent = t('error') + e.message; $('toLib').disabled = false; return; }
+  S.out.saved = true; $('libMsg').textContent = t('libSaved', { t: outTitle() }); renderLib();
 };
 $('shareOut').onclick = async () => {
   if (!S.out) return; const f = new File([S.out.blob], (outTitle().replace(/[^\w\- ]+/g, '') || 'neogif') + '.gif', { type: 'image/gif' });
@@ -248,16 +250,43 @@ $('shareOut').onclick = async () => {
   else location.href = xIntentUrl(outTitle());
 };
 
-// ---------- Bibliothèque (IndexedDB) ----------
-const dbP = new Promise((res, rej) => { const r = indexedDB.open('neogif', 1);
-  r.onupgradeneeded = () => r.result.createObjectStore('gifs', { keyPath: 'id', autoIncrement: true });
-  r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
-const tx = async (mode, fn) => { const db = await dbP; return new Promise((res, rej) => {
-  const t = db.transaction('gifs', mode), st = t.objectStore('gifs'), out = fn(st);
-  t.oncomplete = () => res(out.result); t.onerror = () => rej(t.error); }); };
-const allGifs = () => tx('readonly', s => s.getAll());
-const putGif = g => tx('readwrite', s => s.put(g));
-async function addGif(g) { return tx('readwrite', s => s.add({ views: 0, downloads: 0, shares: 0, created: Date.now(), ...g })); }
+// ---------- Bibliothèque publique (Supabase) ----------
+const SB_URL = 'https://gzfnfhijgqmoiaftujjv.supabase.co', SB_KEY = 'sb_publishable_K9EEbzeE5-NnRvmZ54jf-A_XJzi7-yx';
+const SBH = { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY };
+const COLS = 'id,title,tags,path,width,height,frames,size,views,downloads,shares,created_at';
+const MAX_BYTES = 15 * 1024 * 1024;
+const OWNER = (() => { let k; try { k = localStorage.getItem('neogif-owner'); } catch {}
+  if (!k || k.length < 32) { const a = crypto.getRandomValues(new Uint8Array(32)); k = [...a].map(x => x.toString(16).padStart(2, '0')).join('');
+    try { localStorage.setItem('neogif-owner', k); } catch {} } return k; })();
+const pubUrl = path => `${SB_URL}/storage/v1/object/public/gifs/${path}`;
+async function sb(path, opt = {}) {
+  const r = await fetch(SB_URL + path, { ...opt, headers: { ...SBH, ...(opt.json !== undefined ? { 'Content-Type': 'application/json' } : {}), ...(opt.headers || {}) }, body: opt.json !== undefined ? JSON.stringify(opt.json) : opt.body });
+  const txt = await r.text(); if (!r.ok) { const e = new Error(txt.includes('rate_limit') ? t('rateLimit') : (r.status + ' ' + txt.slice(0, 160))); throw e; }
+  return txt ? JSON.parse(txt) : null;
+}
+const rpc = (fn, args) => sb('/rest/v1/rpc/' + fn, { method: 'POST', json: args });
+const norm = r => ({ ...r, tags: r.tags || [], bytes: r.size, created: Date.parse(r.created_at), url: pubUrl(r.path) });
+async function allGifs() { return (await sb(`/rest/v1/gifs?select=${COLS}&order=created_at.desc&limit=500`)).map(norm); }
+const bump = (g, c) => { g[c] = (g[c] || 0) + 1; rpc('increment_counter', { gif_id: g.id, counter: c }).catch(() => {}); };
+async function addGif(g) {
+  const blob = g.blob;
+  if (!blob || (blob.type && blob.type !== 'image/gif')) throw new Error(t('notGif'));
+  const head = new Uint8Array(await blob.slice(0, 6).arrayBuffer());
+  if (String.fromCharCode(...head).slice(0, 4) !== 'GIF8') throw new Error(t('notGif'));
+  if (blob.size > MAX_BYTES) throw new Error(t('tooBig'));
+  const id = crypto.randomUUID(), path = id + '.gif';
+  await sb('/storage/v1/object/gifs/' + path, { method: 'POST', headers: { 'Content-Type': 'image/gif', 'x-upsert': 'false' }, body: blob });
+  try {
+    await sb('/rest/v1/gifs', { method: 'POST', headers: { Prefer: 'return=minimal' }, json: {
+      id, path, owner_token: OWNER, title: String(g.title || '').slice(0, 120), tags: (g.tags || []).slice(0, 20),
+      width: g.width | 0, height: g.height | 0, frames: g.frames | 0, size: blob.size } });
+  } catch (e) { sb('/storage/v1/object/gifs/' + path, { method: 'DELETE' }).catch(() => {}); throw e; }
+  return id;
+}
+async function deleteGif(g) { const path = await rpc('delete_gif', { gif_id: g.id, token: OWNER });
+  await sb('/storage/v1/object/gifs/' + path, { method: 'DELETE' }).catch(() => {}); }
+const blobCache = new Map();
+async function gifBlob(g) { if (!blobCache.has(g.id)) blobCache.set(g.id, fetch(g.url).then(r => r.blob())); return blobCache.get(g.id); }
 window.NEOGIF.lib = { allGifs, addGif };
 
 async function gifSize(blob) { const img = new Image(); img.src = URL.createObjectURL(blob); await img.decode().catch(() => {}); return [img.naturalWidth, img.naturalHeight]; }
@@ -265,41 +294,52 @@ function countFrames(buf) { // compte les descripteurs d'image (approx. rapide)
   const b = new Uint8Array(buf); let n = 0; for (let i = 0; i < b.length - 9; i++) if (b[i] === 0x21 && b[i + 1] === 0xF9 && b[i + 2] === 4) n++; return Math.max(1, n); }
 $('upBtn').onclick = async () => {
   const f = $('upGif').files[0]; if (!f) return $('upMsg').textContent = t('chooseGif');
+  if (f.type !== 'image/gif' && !/\.gif$/i.test(f.name)) return $('upMsg').textContent = t('notGif');
+  if (f.size > MAX_BYTES) return $('upMsg').textContent = t('tooBig');
   const [w, h] = await gifSize(f), frames = countFrames(await f.arrayBuffer());
-  await addGif({ title: $('upTitle').value || f.name.replace(/\.gif$/i, ''), tags: parseTags($('upTags').value), blob: f, width: w, height: h, frames, bytes: f.size });
+  $('upBtn').disabled = true;
+  try { await addGif({ title: $('upTitle').value || f.name.replace(/\.gif$/i, ''), tags: parseTags($('upTags').value), blob: f, width: w, height: h, frames, bytes: f.size }); }
+  catch (e) { $('upMsg').textContent = t('error') + e.message; return; } finally { $('upBtn').disabled = false; }
   const v = validateX({ bytes: f.size, width: w, height: h, frames });
   $('upMsg').textContent = t('added') + (v.ok ? t('ready') : t('notReady') + ' (' + v.checks.filter(c => !c.ok).map(c => t('chk_' + c.key)).join(', ') + ')');
   $('upTitle').value = $('upTags').value = ''; $('upGif').value = ''; renderLib();
 };
 $('search').oninput = () => renderLib();
-let urls = [];
+let mine = new Set();
 async function renderLib() {
-  urls.forEach(URL.revokeObjectURL); urls = [];
-  const items = await allGifs(), q = $('search').value, list = items.filter(i => matches(i, q));
-  const tile = g => { const u = URL.createObjectURL(g.blob); urls.push(u);
-    return `<div class="tile" data-id="${g.id}"><img loading="lazy" src="${u}" alt=""><span>${esc(g.title)}</span></div>`; };
+  let items;
+  try { items = await allGifs(); } catch (e) { $('allGifs').innerHTML = `<p class="muted">${esc(t('netErr'))}</p>`; console.error(e); return; }
+  rpc('is_mine', { gif_ids: items.map(i => i.id), token: OWNER }).then(ids => { mine = new Set(ids || []); }).catch(() => {});
+  const q = $('search').value, list = items.filter(i => matches(i, q));
+  const tile = g => `<div class="tile" data-id="${g.id}"><img loading="lazy" src="${g.url}" alt=""><span>${esc(g.title)}</span></div>`;
   $('trending').innerHTML = [...list].sort((a, b) => trendScore(b) - trendScore(a)).slice(0, 6).map(tile).join('') || `<p class="muted">${t('emptyTrend')}</p>`;
   $('allGifs').innerHTML = [...list].sort((a, b) => b.created - a.created).map(tile).join('') || `<p class="muted">${t('noResult')}</p>`;
-  document.querySelectorAll('.tile').forEach(t => t.onclick = () => openGif(items.find(i => i.id === +t.dataset.id)));
+  document.querySelectorAll('.tile').forEach(el => el.onclick = () => openGif(items.find(i => i.id === el.dataset.id)));
 }
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+let dlUrl;
 async function openGif(g) {
-  g.views++; await putGif(g);
-  const u = URL.createObjectURL(g.blob), v = validateX(g);
-  $('mImg').src = u; $('mTitle').textContent = g.title; $('mTags').textContent = g.tags.join(' · ');
+  bump(g, 'views'); const v = validateX(g);
+  $('mImg').src = g.url; $('mTitle').textContent = g.title; $('mTags').textContent = g.tags.join(' · ');
   $('mMeta').textContent = `${g.width}×${g.height} · ${g.frames} ${t('frames')} · ${(g.bytes / 1e6).toFixed(2)} ${t('mb')} · ${g.views} ${t('views')} · ${t(v.ok ? 'ready' : 'notReady')}`;
-  $('mDl').href = u; $('mDl').download = g.title.replace(/[^\w\- ]+/g, '') + '.gif';
-  $('mDl').onclick = () => { g.downloads++; putGif(g); };
+  const fname = (g.title.replace(/[^\w\- ]+/g, '') || 'neogif') + '.gif';
+  $('mDl').href = g.url; $('mDl').download = fname;
+  gifBlob(g).then(b => { if (dlUrl) URL.revokeObjectURL(dlUrl); dlUrl = URL.createObjectURL(b); $('mDl').href = dlUrl; }).catch(() => {});
+  $('mDl').onclick = () => bump(g, 'downloads');
   $('mX').href = xIntentUrl(g.title);
   $('mX').onclick = async (e) => {
-    g.shares = (g.shares || 0) + 1; putGif(g);
-    const f = new File([g.blob], (g.title.replace(/[^\w\- ]+/g, '') || 'neogif') + '.gif', { type: 'image/gif' });
-    if (navigator.canShare && navigator.canShare({ files: [f] })) {
-      e.preventDefault();
-      try { await navigator.share({ files: [f], text: g.title }); } catch (err) { if (err.name !== 'AbortError') location.href = $('mX').href; }
-    }
+    bump(g, 'shares');
+    if (!(navigator.canShare)) return;
+    e.preventDefault();
+    try {
+      const f = new File([await gifBlob(g)], fname, { type: 'image/gif' });
+      if (navigator.canShare({ files: [f] })) await navigator.share({ files: [f], text: g.title });
+      else location.href = $('mX').href;
+    } catch (err) { if (err.name !== 'AbortError') location.href = $('mX').href; }
   };
-  $('mDel').onclick = async () => { if (confirm(t('confirmDel'))) { await tx('readwrite', s => s.delete(g.id)); renderLib(); } };
+  $('mDel').style.display = mine.has(g.id) ? '' : 'none';
+  $('mDel').onclick = async () => { if (!confirm(t('confirmDel'))) return;
+    try { await deleteGif(g); $('modal').close(); } catch (e) { alert(t('error') + e.message); } };
   $('modal').showModal(); $('modal').onclose = () => renderLib();
 }
 

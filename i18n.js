@@ -9,7 +9,7 @@ fr: { gH:'🧭 Repères GIF pour 𝕏', gFmtH:'📐 Formats', gFmt1:'Carré 1:1 
  prevH:'3. Aperçu & 𝕏', warnVideo:'Ta vidéo est trop lourde pour 𝕏.', warnGif:'Ton GIF est trop lourd pour 𝕏.', warnRest:" Pour respecter la limite, elle sera réduite et risque d'être pixelisée.",
  fixShorten:'✂️ Raccourcir', fixFps:'🎞️ Baisser la fluidité', fixCrop:'🔲 Recadrer', fixIgnore:'Continuer quand même', qLbl:'Qualité estimée :', before:'Avant (source recadrée)', after:'Après (rendu GIF)', gifAlt:'GIF généré',
  make:'🚀 Générer le GIF', download:'⬇️ Télécharger', publish:'📼 Publier dans la bibliothèque', upH:'Téléverser un GIF', phTitle:'Titre', phTags:'Étiquettes : drôle, québec, chat', add:'➕ Ajouter',
- phSearch:'🔍 Rechercher par titre ou étiquette…', trending:'🔥 Tendances', all:'🕹️ Tous les GIF', libNote:'Prototype : la bibliothèque est stockée sur cet appareil (IndexedDB). « Partager sur 𝕏 » ouvre 𝕏 avec un texte prêt ; tu dois joindre le GIF téléchargé toi-même.',
+ phSearch:'🔍 Rechercher par titre ou étiquette…', trending:'🔥 Tendances', all:'🕹️ Tous les GIF', libNote:'Bibliothèque publique en ligne : les GIF que tu publies sont visibles par tout le monde. Seul l’appareil qui a publié un GIF peut le retirer. « Partager sur 𝕏 » partage le fichier quand ton appareil le permet, sinon ouvre 𝕏 avec un texte prêt.',
  share:'Partager sur X', close:'Fermer', xNote:"Sur 𝕏 : télécharge d'abord le GIF, puis joins-le à ton message.",
  ready:'Prêt pour 𝕏 ✅', notReady:'Pas prêt pour 𝕏 ❌', estimated:' (estimé)', chk_taille:'Poids ≤ 15 Mo', chk_largeur:'Largeur ≤ 1280 px', chk_hauteur:'Hauteur ≤ 1080 px', chk_images:'Images ≤ 350', chk_pixels:'L×H×images ≤ 300 M',
  q_Excellente:'Excellente', q_Correcte:'Correcte', q_Pixelisée:'Pixelisée', mb:'Mo', videoErr:'Format vidéo non supporté par ce navigateur', images:'image(s)',
@@ -24,7 +24,7 @@ en: { gH:'🧭 GIF benchmarks for 𝕏', gFmtH:'📐 Formats', gFmt1:'Square 1:1
  prevH:'3. Preview & 𝕏', warnVideo:'Your video is too heavy for 𝕏.', warnGif:'Your GIF is too heavy for 𝕏.', warnRest:' To fit the limit, it will be scaled down and may look pixelated.',
  fixShorten:'✂️ Shorten', fixFps:'🎞️ Lower smoothness', fixCrop:'🔲 Crop', fixIgnore:'Continue anyway', qLbl:'Estimated quality:', before:'Before (cropped source)', after:'After (GIF render)', gifAlt:'Generated GIF',
  make:'🚀 Generate GIF', download:'⬇️ Download', publish:'📼 Publish to library', upH:'Upload a GIF', phTitle:'Title', phTags:'Tags: funny, quebec, cat', add:'➕ Add',
- phSearch:'🔍 Search by title or tag…', trending:'🔥 Trending', all:'🕹️ All GIFs', libNote:'Prototype: the library is stored on this device (IndexedDB). “Share on 𝕏” opens 𝕏 with ready-made text; you must attach the downloaded GIF yourself.',
+ phSearch:'🔍 Search by title or tag…', trending:'🔥 Trending', all:'🕹️ All GIFs', libNote:'Public online library: GIFs you publish are visible to everyone. Only the device that published a GIF can remove it. “Share on 𝕏” shares the file when your device supports it, otherwise opens 𝕏 with ready-made text.',
  share:'Share on X', close:'Close', xNote:'On 𝕏: download the GIF first, then attach it to your post.',
  ready:'Ready for 𝕏 ✅', notReady:'Not ready for 𝕏 ❌', estimated:' (estimated)', chk_taille:'Size ≤ 15 MB', chk_largeur:'Width ≤ 1280 px', chk_hauteur:'Height ≤ 1080 px', chk_images:'Frames ≤ 350', chk_pixels:'W×H×frames ≤ 300 M',
  q_Excellente:'Excellent', q_Correcte:'Fair', q_Pixelisée:'Pixelated', mb:'MB', videoErr:'Video format not supported by this browser', images:'image(s)',
@@ -39,7 +39,7 @@ es: { gH:'🧭 Referencias GIF para 𝕏', gFmtH:'📐 Formatos', gFmt1:'Cuadrad
  prevH:'3. Vista previa y 𝕏', warnVideo:'Tu vídeo es demasiado pesado para 𝕏.', warnGif:'Tu GIF es demasiado pesado para 𝕏.', warnRest:' Para respetar el límite, se reducirá y podría verse pixelado.',
  fixShorten:'✂️ Acortar', fixFps:'🎞️ Bajar la fluidez', fixCrop:'🔲 Encuadrar', fixIgnore:'Continuar de todos modos', qLbl:'Calidad estimada:', before:'Antes (fuente encuadrada)', after:'Después (GIF)', gifAlt:'GIF generado',
  make:'🚀 Generar el GIF', download:'⬇️ Descargar', publish:'📼 Publicar en la biblioteca', upH:'Subir un GIF', phTitle:'Título', phTags:'Etiquetas: gracioso, quebec, gato', add:'➕ Añadir',
- phSearch:'🔍 Buscar por título o etiqueta…', trending:'🔥 Tendencias', all:'🕹️ Todos los GIF', libNote:'Prototipo: la biblioteca se guarda en este dispositivo (IndexedDB). «Compartir en 𝕏» abre 𝕏 con un texto listo; debes adjuntar tú mismo el GIF descargado.',
+ phSearch:'🔍 Buscar por título o etiqueta…', trending:'🔥 Tendencias', all:'🕹️ Todos los GIF', libNote:'Biblioteca pública en línea: los GIF que publicas son visibles para todos. Solo el dispositivo que publicó un GIF puede retirarlo. «Compartir en 𝕏» comparte el archivo si tu dispositivo lo permite; si no, abre 𝕏 con un texto listo.',
  share:'Compartir en X', close:'Cerrar', xNote:'En 𝕏: primero descarga el GIF y luego adjúntalo a tu mensaje.',
  ready:'Listo para 𝕏 ✅', notReady:'No listo para 𝕏 ❌', estimated:' (estimado)', chk_taille:'Peso ≤ 15 MB', chk_largeur:'Ancho ≤ 1280 px', chk_hauteur:'Alto ≤ 1080 px', chk_images:'Imágenes ≤ 350', chk_pixels:'An×Al×imágenes ≤ 300 M',
  q_Excellente:'Excelente', q_Correcte:'Aceptable', q_Pixelisée:'Pixelada', mb:'MB', videoErr:'Formato de vídeo no compatible con este navegador', images:'imagen(es)',
@@ -54,7 +54,7 @@ ja: { gH:'🧭 X向けGIFの目安', gFmtH:'📐 サイズ', gFmt1:'正方形 1:
  prevH:'3. プレビューと 𝕏', warnVideo:'動画が 𝕏 には重すぎます。', warnGif:'GIF が 𝕏 には重すぎます。', warnRest:'制限に収めるため縮小され、画質が粗くなる可能性があります。',
  fixShorten:'✂️ 短くする', fixFps:'🎞️ なめらかさを下げる', fixCrop:'🔲 切り抜く', fixIgnore:'このまま続ける', qLbl:'推定画質：', before:'変換前（切り抜き後）', after:'変換後（GIF）', gifAlt:'生成されたGIF',
  make:'🚀 GIFを生成', download:'⬇️ ダウンロード', publish:'📼 ライブラリに公開', upH:'GIFをアップロード', phTitle:'タイトル', phTags:'タグ：おもしろ, ケベック, 猫', add:'➕ 追加',
- phSearch:'🔍 タイトルやタグで検索…', trending:'🔥 トレンド', all:'🕹️ すべてのGIF', libNote:'試作版：ライブラリはこの端末（IndexedDB）に保存されます。「Xで共有」は文面入りでXを開きます。ダウンロードしたGIFはご自身で添付してください。',
+ phSearch:'🔍 タイトルやタグで検索…', trending:'🔥 トレンド', all:'🕹️ すべてのGIF', libNote:'公開オンラインライブラリ：公開したGIFは誰でも見られます。GIFを削除できるのは公開した端末だけです。「𝕏で共有」は端末が対応していればファイルを共有し、非対応なら文面入りで𝕏を開きます。',
  share:'Xで共有', close:'閉じる', xNote:'Xでは：まずGIFをダウンロードし、投稿に添付してください。',
  ready:'X 対応 ✅', notReady:'X 非対応 ❌', estimated:'（推定）', chk_taille:'サイズ ≤ 15 MB', chk_largeur:'幅 ≤ 1280 px', chk_hauteur:'高さ ≤ 1080 px', chk_images:'フレーム数 ≤ 350', chk_pixels:'幅×高さ×フレーム ≤ 300 M',
  q_Excellente:'高画質', q_Correcte:'普通', q_Pixelisée:'粗い', mb:'MB', videoErr:'このブラウザではこの動画形式に対応していません', images:'枚',
@@ -69,7 +69,7 @@ pt: { gH:'🧭 Referências de GIF para o 𝕏', gFmtH:'📐 Formatos', gFmt1:'Q
  prevH:'3. Prévia e 𝕏', warnVideo:'Seu vídeo é pesado demais para o 𝕏.', warnGif:'Seu GIF é pesado demais para o 𝕏.', warnRest:' Para respeitar o limite, ele será reduzido e pode ficar pixelado.',
  fixShorten:'✂️ Encurtar', fixFps:'🎞️ Reduzir a fluidez', fixCrop:'🔲 Enquadrar', fixIgnore:'Continuar mesmo assim', qLbl:'Qualidade estimada:', before:'Antes (fonte enquadrada)', after:'Depois (GIF)', gifAlt:'GIF gerado',
  make:'🚀 Gerar o GIF', download:'⬇️ Baixar', publish:'📼 Publicar na biblioteca', upH:'Enviar um GIF', phTitle:'Título', phTags:'Tags: engraçado, quebec, gato', add:'➕ Adicionar',
- phSearch:'🔍 Buscar por título ou tag…', trending:'🔥 Em alta', all:'🕹️ Todos os GIFs', libNote:'Protótipo: a biblioteca fica salva neste dispositivo (IndexedDB). “Compartilhar no 𝕏” abre o 𝕏 com um texto pronto; você precisa anexar o GIF baixado.',
+ phSearch:'🔍 Buscar por título ou tag…', trending:'🔥 Em alta', all:'🕹️ Todos os GIFs', libNote:'Biblioteca pública online: os GIFs que você publica ficam visíveis para todos. Só o dispositivo que publicou um GIF pode removê-lo. “Compartilhar no 𝕏” compartilha o arquivo quando seu dispositivo permite; senão, abre o 𝕏 com um texto pronto.',
  share:'Compartilhar no X', close:'Fechar', xNote:'No 𝕏: baixe o GIF primeiro e depois anexe-o à sua publicação.',
  ready:'Pronto para o 𝕏 ✅', notReady:'Não pronto para o 𝕏 ❌', estimated:' (estimado)', chk_taille:'Tamanho ≤ 15 MB', chk_largeur:'Largura ≤ 1280 px', chk_hauteur:'Altura ≤ 1080 px', chk_images:'Quadros ≤ 350', chk_pixels:'L×A×quadros ≤ 300 M',
  q_Excellente:'Excelente', q_Correcte:'Razoável', q_Pixelisée:'Pixelada', mb:'MB', videoErr:'Formato de vídeo não suportado por este navegador', images:'imagem(ns)',
@@ -94,3 +94,9 @@ export function applyI18n(root = document) {
   root.querySelectorAll('[data-i18n-alt]').forEach(e => e.alt = t(e.dataset.i18nAlt));
 }
 export function setLang(l) { if (!D[l]) return; lang = l; try { localStorage.setItem('neogif-lang', l); } catch {} applyI18n(); }
+
+Object.assign(D.fr, { notGif:'Ce fichier n’est pas un GIF.', tooBig:'GIF trop lourd (max 15 Mo).', rateLimit:'Limite atteinte : 20 GIF par heure. Réessaie plus tard.', netErr:'Impossible de charger la bibliothèque en ligne.' });
+Object.assign(D.en, { notGif:'This file is not a GIF.', tooBig:'GIF too large (max 15 MB).', rateLimit:'Limit reached: 20 GIFs per hour. Try again later.', netErr:'Could not load the online library.' });
+Object.assign(D.es, { notGif:'Este archivo no es un GIF.', tooBig:'GIF demasiado pesado (máx. 15 MB).', rateLimit:'Límite alcanzado: 20 GIF por hora. Inténtalo más tarde.', netErr:'No se pudo cargar la biblioteca en línea.' });
+Object.assign(D.ja, { notGif:'このファイルはGIFではありません。', tooBig:'GIFが大きすぎます（最大15MB）。', rateLimit:'上限に達しました：1時間に20個まで。後でもう一度お試しください。', netErr:'オンラインライブラリを読み込めませんでした。' });
+Object.assign(D.pt, { notGif:'Este arquivo não é um GIF.', tooBig:'GIF grande demais (máx. 15 MB).', rateLimit:'Limite atingido: 20 GIFs por hora. Tente mais tarde.', netErr:'Não foi possível carregar a biblioteca online.' });
