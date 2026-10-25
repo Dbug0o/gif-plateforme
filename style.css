@@ -74,3 +74,12 @@ dialog::backdrop{background:#000b}dialog img{width:100%;border-radius:8px}
 @media(min-width:600px){#fxChips{grid-template-columns:repeat(4,1fr)}}
 #fxChips .chip{padding:.75rem .4rem;font-size:.9rem;border-color:var(--cyan);background:#00f0ff14;text-shadow:0 0 6px #00f0ff88}
 #fxChips .chip.active{background:linear-gradient(135deg,var(--pink),#7b2bff);border-color:var(--pink);box-shadow:0 0 14px var(--pink),0 0 28px #ff2bd655}
+
+.metaCard{border-color:#ffe60088;box-shadow:0 0 22px #ffe60022,inset 0 0 24px #ff2bd614}
+.neoField span{display:block;font-size:.8rem;color:var(--cyan);text-transform:uppercase;letter-spacing:.06em;text-shadow:0 0 6px #00f0ff88}
+.neoField input{-webkit-appearance:none;appearance:none;background:#0b0420!important;border:1px solid var(--cyan)!important;box-shadow:inset 0 0 10px #00f0ff22;color:#fff}
+.neoField input:focus{outline:none;border-color:var(--pink)!important;box-shadow:0 0 12px var(--pink),inset 0 0 10px #ff2bd633}
+.neoField input::placeholder{color:#9a8fc499}
+.tagPrev{display:flex;flex-wrap:wrap;gap:.35rem;min-height:.5rem}
+.tagPill{padding:.2rem .55rem;border-radius:999px;border:1px solid var(--pink);background:#ff2bd622;font-size:.8rem;color:#fff;text-shadow:0 0 6px var(--pink)}
+.libMsg{color:#7dffc4;text-shadow:0 0 8px #00ff99;font-weight:700;min-height:1em;margin:.4rem 0 0}

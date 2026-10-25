@@ -1,7 +1,7 @@
-import { GIFEncoder, quantize, applyPalette } from './gifenc.js?v=9';
-import { t, lang, LANGS, setLang, applyI18n } from './i18n.js?v=9';
-import { FX, fxTransform, fxApply } from './effects.js?v=9';
-import { X_LIMITS, validateX, planOutput, frameCount, parseTags, matches, trendScore, xIntentUrl } from './core.js?v=9';
+import { GIFEncoder, quantize, applyPalette } from './gifenc.js?v=10';
+import { t, lang, LANGS, setLang, applyI18n } from './i18n.js?v=10';
+import { FX, fxTransform, fxApply } from './effects.js?v=10';
+import { X_LIMITS, validateX, planOutput, frameCount, parseTags, matches, trendScore, xIntentUrl } from './core.js?v=10';
 
 const $ = id => document.getElementById(id);
 const S = { fx: [], src: null, crop: 'orig', ignoreWarn: false, out: null, busy: false };
@@ -42,7 +42,9 @@ $('inImages').onchange = async e => {
 };
 function openEditor() {
   const isV = S.src.type === 'video';
-  $('editor').hidden = false; $('videoOpts').hidden = !isV; $('imageOpts').hidden = isV; $('fpsWrap').hidden = !isV; $('fxCard').hidden = isV;
+  $('editor').hidden = false; $('videoOpts').hidden = !isV; $('imageOpts').hidden = isV; $('fpsWrap').hidden = !isV; $('fxCard').hidden = false; $('fxLoop').hidden = isV; $('fxHint').textContent = t(isV ? 'fxHintVideo' : 'fxHint');
+  if (!$('gifTitle').value) $('gifTitle').value = (S.src.name || t('myGif')).replace(/\.\w+$/, '');
+  $('libMsg').textContent = '';
   S.ignoreWarn = false; resetOut(); update();
 }
 
@@ -51,7 +53,7 @@ const P = () => ({
   start: +$('tStart').value, end: +$('tEnd').value, fps: +$('fps').value, speed: +$('speed').value,
   delay: +$('imgDelay').value, zoom: +$('zoom').value, offX: +$('offX').value, offY: +$('offY').value,
   ratio: +$('ratio').value, maxW: +$('maxW').value,
-  fx: S.src?.type === 'images' ? S.fx.slice() : [], fxI: +$('fxInt').value, fxDur: +$('fxDur').value, fxFps: +$('fxFps').value,
+  fx: S.src ? S.fx.slice() : [], fxI: +$('fxInt').value, fxDur: +$('fxDur').value, fxFps: +$('fxFps').value,
   top: $('txtTop').value, bot: $('txtBot').value, font: $('font').value, color: $('txtColor').value, size: +$('txtSize').value,
 });
 document.querySelectorAll('#cropChips .chip').forEach(c => c.onclick = () => {
@@ -75,7 +77,7 @@ function cropRect(sw, sh, p) {
   return { x: (sw - w) * p.offX, y: (sh - h) * p.offY, w, h };
 }
 function nFrames(p) {
-  if (p.fx.length) return Math.max(2, Math.round(p.fxDur * p.fxFps));
+  if (p.fx.length && S.src.type === 'images') return Math.max(2, Math.round(p.fxDur * p.fxFps));
   return S.src.type === 'video' ? frameCount(Math.max(.1, p.end - p.start), p.fps, p.speed) : S.src.imgs.length;
 }
 function currentPlan(p = P(), scaleOverride = 1) {
@@ -159,9 +161,13 @@ function tick(now) {
     if (now - PV.lastI >= p.delay / p.speed) { PV.img = (PV.img + 1) % src.imgs.length; PV.lastI = now; }
     el = src.imgs[PV.img % src.imgs.length];
   }
-  const b = $('cvBefore'); drawFrame(b.getContext('2d'), el, src.w, src.h, b.width, b.height, p);
+  const b = $('cvBefore'); drawFrame(b.getContext('2d'), el, src.w, src.h, b.width, b.height, { ...p, fx: [] });
   const step = src.type === 'video' ? 1000 / p.fps : 0;
-  if (!S.out && now - PV.lastA >= step) { PV.lastA = now; const a = $('cvAfter'); drawFrame(a.getContext('2d'), el, src.w, src.h, a.width, a.height, p); }
+  if (!S.out && now - PV.lastA >= step) { PV.lastA = now; const a = $('cvAfter');
+    // Effets sur vidéo : phase = position dans l'extrait découpé → boucle calée sur la durée du clip
+    let ph = 0, f = 0;
+    if (src.type === 'video' && p.fx.length) { const n = pl.frames; ph = Math.min(.999, Math.max(0, (el.currentTime - p.start) / Math.max(.1, p.end - p.start))); f = Math.floor(ph * n); PV.frames = (PV.frames || 0) + 1; }
+    drawFrame(a.getContext('2d'), el, src.w, src.h, a.width, a.height, p, ph, f); }
 }
 function setBadge(v, estimated) {
   lastBadge = [v, estimated]; const el = $('xBadge'); el.className = 'badge ' + (v.ok ? 'ok' : 'ko');
@@ -172,7 +178,7 @@ function setQuality(q) {
   lastQ = q; $('qLabel').textContent = t('q_' + q); $('qBar').style.width = { Excellente: '100%', Correcte: '60%', 'Pixelisée': '25%' }[q];
   $('qLabel').style.color = { Excellente: '#7dffc4', Correcte: '#ffe600', 'Pixelisée': '#ff6b8b' }[q];
 }
-function resetOut() { S.out = null; $('resultActions').hidden = true; $('gifOut').hidden = true; $('cvAfter').hidden = false; }
+function resetOut() { S.out = null; $('libMsg').textContent = ''; $('resultActions').hidden = true; $('gifOut').hidden = true; $('cvAfter').hidden = false; }
 
 // ---------- Options d'avertissement ----------
 const heavy = () => currentPlan().heavy;
@@ -218,7 +224,7 @@ $('btnMake').onclick = async () => {
     S.out = { blob, width: pl.width, height: pl.height, frames: pl.frames, bytes: bytes.length };
     const url = URL.createObjectURL(blob);
     $('gifOut').src = url; $('gifOut').hidden = false; $('cvAfter').hidden = true;
-    $('dlOut').href = url; $('resultActions').hidden = false;
+    $('dlOut').href = url; $('dlOut').download = (outTitle().replace(/[^\w\- ]+/g, '') || 'neogif') + '.gif'; $('resultActions').hidden = false; $('toLib').disabled = false; $('libMsg').textContent = '';
     const v = validateX({ bytes: bytes.length, width: pl.width, height: pl.height, frames: pl.frames });
     setBadge(v, false);
     const red = Math.min(1, pl.width / pl.wantedW);
@@ -227,10 +233,19 @@ $('btnMake').onclick = async () => {
   } catch (e) { $('pTxt').textContent = t('error') + e.message; console.error(e); }
   S.busy = false; $('btnMake').disabled = false;
 };
+const renderTags = () => { $('tagPrev').innerHTML = parseTags($('gifTags').value).map(x => `<span class="tagPill">${esc(x)}</span>`).join(''); };
+$('gifTags').addEventListener('input', renderTags);
+$('gifTitle').addEventListener('input', () => { if (S.out) S.out.saved = false; });
+const outTitle = () => $('gifTitle').value.trim() || (S.src?.name || t('myGif')).replace(/\.\w+$/, '');
 $('toLib').onclick = async () => {
-  if (!S.out) return; const title = prompt(t('promptTitle'), (S.src.name || t('myGif')).replace(/\.\w+$/, '')); if (title === null) return;
-  const tags = parseTags(prompt(t('promptTags'), t('defTags')) || '');
-  await addGif({ title, tags, ...S.out }); alert(t('published'));
+  if (!S.out || S.out.saved) return; const { saved, ...o } = S.out;
+  await addGif({ title: outTitle(), tags: parseTags($('gifTags').value), ...o }); S.out.saved = true;
+  $('libMsg').textContent = t('libSaved', { t: outTitle() }); $('toLib').disabled = true;
+};
+$('shareOut').onclick = async () => {
+  if (!S.out) return; const f = new File([S.out.blob], (outTitle().replace(/[^\w\- ]+/g, '') || 'neogif') + '.gif', { type: 'image/gif' });
+  if (navigator.canShare && navigator.canShare({ files: [f] })) { try { await navigator.share({ files: [f], text: outTitle() }); } catch {} }
+  else location.href = xIntentUrl(outTitle());
 };
 
 // ---------- Bibliothèque (IndexedDB) ----------
