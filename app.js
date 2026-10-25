@@ -1,7 +1,7 @@
-import { GIFEncoder, quantize, applyPalette } from './gifenc.js?v=18';
-import { t, lang, LANGS, setLang, applyI18n } from './i18n.js?v=18';
-import { FX, fxTransform, fxApply } from './effects.js?v=18';
-import { X_LIMITS, validateX, planOutput, frameCount, parseTags, matches, trendScore, xIntentUrl } from './core.js?v=18';
+import { GIFEncoder, quantize, applyPalette } from './gifenc.js?v=19';
+import { t, lang, LANGS, setLang, applyI18n } from './i18n.js?v=19';
+import { FX, fxTransform, fxApply } from './effects.js?v=19';
+import { X_LIMITS, validateX, planOutput, frameCount, parseTags, matches, trendScore, xIntentUrl } from './core.js?v=19';
 
 const $ = id => document.getElementById(id);
 const S = { fx: [], src: null, crop: 'orig', ignoreWarn: false, out: null, busy: false };
@@ -417,3 +417,10 @@ if (window.caches) caches.keys().then(ks => ks.filter(k => k.startsWith('neogif-
     try { localStorage.setItem('neogif-iostip', '1'); } catch {}
     $('iosTipX').onclick = () => { $('iosTip').hidden = true; }; }
 }
+
+// ---------- Nouveau GIF : repartir à zéro ----------
+const freshCreate = () => { location.href = location.pathname + '?tab=creer&t=' + Date.now(); };
+$('newGif').onclick = freshCreate;
+document.querySelector('.tab[data-tab="creer"]').addEventListener('click', e => { if (S.out) { e.stopImmediatePropagation(); freshCreate(); } }, true);
+$('fabCreate').addEventListener('click', e => { if (S.out) { e.stopImmediatePropagation(); freshCreate(); } }, true);
+if (new URLSearchParams(location.search).get('tab') === 'creer') { history.replaceState(null, '', location.pathname); document.querySelector('.tab[data-tab="creer"]').click(); }
