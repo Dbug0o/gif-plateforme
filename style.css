@@ -88,3 +88,6 @@ dialog::backdrop{background:#000b}dialog img{width:100%;border-radius:8px}
 #btnInstall{padding:.45rem .7rem;font-size:.85rem}#btnInstall[hidden],.iosTip[hidden]{display:none}
 .iosTip{position:fixed;left:.6rem;right:.6rem;bottom:.6rem;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:.6rem;background:#160a35f2;border:1px solid var(--cyan);border-radius:12px;padding:.7rem .9rem;box-shadow:0 0 18px #00f0ff55;font-size:.95rem}
 .iosTip .btn{padding:.3rem .6rem}
+
+#toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,40px);opacity:0;transition:.3s;z-index:9999;background:#120630;color:#7dffc4;border:2px solid #00f0ff;box-shadow:0 0 14px #00f0ff;border-radius:14px;padding:.8rem 1.1rem;font-weight:700;max-width:90vw;text-align:center;pointer-events:none}
+#toast.show{opacity:1;transform:translate(-50%,0)}

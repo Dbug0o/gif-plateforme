@@ -1,7 +1,7 @@
-import { GIFEncoder, quantize, applyPalette } from './gifenc.js?v=19';
-import { t, lang, LANGS, setLang, applyI18n } from './i18n.js?v=19';
-import { FX, fxTransform, fxApply } from './effects.js?v=19';
-import { X_LIMITS, validateX, planOutput, frameCount, parseTags, matches, trendScore, xIntentUrl } from './core.js?v=19';
+import { GIFEncoder, quantize, applyPalette } from './gifenc.js?v=20';
+import { t, lang, LANGS, setLang, applyI18n } from './i18n.js?v=20';
+import { FX, fxTransform, fxApply } from './effects.js?v=20';
+import { X_LIMITS, validateX, planOutput, frameCount, parseTags, matches, trendScore, xIntentUrl } from './core.js?v=20';
 
 const $ = id => document.getElementById(id);
 const S = { fx: [], src: null, crop: 'orig', ignoreWarn: false, out: null, busy: false };
@@ -238,10 +238,16 @@ const renderTags = () => { $('tagPrev').innerHTML = parseTags($('gifTags').value
 $('gifTags').addEventListener('input', renderTags);
 $('gifTitle').addEventListener('input', () => { if (S.out) S.out.saved = false; });
 // ---------- Téléchargement robuste (Android / PWA installée) ----------
+function toast(msg, ms = 3500) {
+  let el = document.getElementById('toast'); if (!el) { el = document.createElement('div'); el.id = 'toast'; }
+  (document.querySelector('dialog[open]') || document.body).appendChild(el);
+  el.textContent = msg; el.classList.add('show'); clearTimeout(toast.h);
+  if (ms) toast.h = setTimeout(() => el.classList.remove('show'), ms);
+}
 function saveBlob(blob, name) {
   const u = URL.createObjectURL(blob), a = document.createElement('a');
   a.href = u; a.download = name; a.rel = 'noopener'; a.style.display = 'none';
-  document.body.appendChild(a); a.click(); a.remove();
+  document.body.appendChild(a); a.click(); a.remove(); toast(t('dlDone'), 4500);
   setTimeout(() => URL.revokeObjectURL(u), 120e3);
 }
 async function shareOrOpen(blob, url, name) {
@@ -359,7 +365,7 @@ async function openGif(g) {
   $('mDl').href = g.url; $('mDl').download = fname;
   gifBlob(g).catch(() => {}); // préchargement
   $('mDl').onclick = async e => {
-    e.preventDefault(); bump(g, 'downloads');
+    e.preventDefault(); bump(g, 'downloads'); toast(t('dlWait'), 0);
     let b = null;
     try { b = await gifBlob(g); if (!b.size) throw new Error('empty'); saveBlob(b, fname); }
     catch { blobCache.delete(g.id); await shareOrOpen(b, g.url, fname); }
