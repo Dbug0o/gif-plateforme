@@ -28,7 +28,7 @@ $('inVideo').onchange = async e => {
     .catch(err => { alert(err.message); throw err; });
   S.src = { type: 'video', el: v, w: v.videoWidth, h: v.videoHeight, dur: v.duration, name: f.name };
   $('tStart').max = $('tEnd').max = v.duration.toFixed(1);
-  $('tStart').value = 0; $('tEnd').value = Math.min(v.duration, 6).toFixed(1);
+  $('tStart').value = 0; $('tEnd').value = Math.min(v.duration, S.presetDur || 6).toFixed(1);
   $('srcInfo').textContent = `🎬 ${f.name} — ${v.videoWidth}×${v.videoHeight}, ${v.duration.toFixed(1)} s, ${(f.size/1e6).toFixed(1)} ${t('mb')}`; $('srcInfo').removeAttribute('data-i18n');
   openEditor();
 };
@@ -60,7 +60,7 @@ document.querySelectorAll('#cropChips .chip').forEach(c => c.onclick = () => {
   .forEach(id => $(id).addEventListener('input', () => { if (id === 'tStart' && +$('tStart').value > +$('tEnd').value - .2) $('tEnd').value = Math.min(+$('tEnd').max, +$('tStart').value + .2); resetOut(); update(); }));
 
 function cropRect(sw, sh, p) {
-  const asp = { orig: sw / sh, '1:1': 1, '9:16': 9 / 16, '16:9': 16 / 9, free: p.ratio }[S.crop];
+  const asp = { orig: sw / sh, '1:1': 1, '9:16': 9 / 16, '4:5': 4 / 5, '16:9': 16 / 9, free: p.ratio }[S.crop];
   let w = sw, h = sw / asp; if (h > sh) { h = sh; w = sh * asp; }
   w /= p.zoom; h /= p.zoom;
   return { x: (sw - w) * p.offX, y: (sh - h) * p.offY, w, h };
@@ -231,3 +231,19 @@ async function openGif(g) {
   $('mDel').onclick = async () => { if (confirm(t('confirmDel'))) { await tx('readwrite', s => s.delete(g.id)); renderLib(); } };
   $('modal').showModal(); $('modal').onclose = () => renderLib();
 }
+
+// ---------- Repères & préréglages ----------
+const guide = $('guide');
+try { guide.open = localStorage.getItem('neogif-guide') !== '0'; } catch { guide.open = true; }
+guide.addEventListener('toggle', () => { try { localStorage.setItem('neogif-guide', guide.open ? '1' : '0'); } catch {} });
+const PRESETS = { meme: { crop: '1:1', maxW: 480, fps: 15, dur: 6, k: 'pMeme' }, clip: { crop: '16:9', maxW: 640, fps: 12, dur: 8, k: 'pClip' }, vert: { crop: '4:5', maxW: 480, fps: 12, dur: 6, k: 'pVert' } };
+export function applyPreset(name) {
+  const p = PRESETS[name]; if (!p) return;
+  document.querySelectorAll('#cropChips .chip').forEach(x => x.classList.toggle('active', x.dataset.crop === p.crop));
+  S.crop = p.crop; $('freeCrop').hidden = true;
+  $('maxW').value = p.maxW; $('fps').value = p.fps; $('vMaxW').textContent = p.maxW; $('vFps').textContent = p.fps; S.presetDur = p.dur;
+  if (S.src?.type === 'video') $('tEnd').value = Math.min(+$('tEnd').max, +$('tStart').value + p.dur).toFixed(1);
+  $('presetMsg').textContent = t('presetOk', { name: t(p.k), w: p.maxW, fps: p.fps, d: p.dur });
+  if (S.src) { resetOut(); update(); }
+}
+document.querySelectorAll('#presets [data-preset]').forEach(b => b.onclick = () => applyPreset(b.dataset.preset));

@@ -53,3 +53,12 @@ dialog{background:#160a35;color:var(--txt);border:1px solid var(--pink);border-r
 dialog::backdrop{background:#000b}dialog img{width:100%;border-radius:8px}
 .lang{background:#160a35;color:var(--txt);border:1px solid #00f0ff66;border-radius:8px;padding:.3rem .4rem;font-size:.85rem;max-width:7.5rem;cursor:pointer}
 @media(max-width:520px){header{gap:.35rem}.logo{font-size:1.3rem}.lang{font-size:.8rem;padding:.25rem}}
+
+.guide summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:.5rem}
+.guide summary::-webkit-details-marker{display:none}
+.guide summary::after{content:"▾";margin-left:auto;color:var(--pink);text-shadow:0 0 6px var(--pink);transition:transform .2s}
+.guide:not([open]) summary::after{transform:rotate(-90deg)}
+.guide summary h2{margin:.2rem 0}
+.gGrid{display:grid;gap:.2rem 1rem;grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+.guide ul{margin:.2rem 0;padding-left:1.1rem;font-size:.9rem}.guide li{margin:.2rem 0}
+.guide .tip{border-left:3px solid var(--yel);background:#ffe60014;padding:.5rem .7rem;border-radius:6px;font-size:.92rem}
