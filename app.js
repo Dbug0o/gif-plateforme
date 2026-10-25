@@ -106,14 +106,42 @@ function update() {
     (pl.reduction < 1 ? t('reduced', { p: Math.round(pl.reduction * 100), w: pl.wantedW, h: pl.wantedH }) : '.');
   clearTimeout(tmr); tmr = setTimeout(() => drawPreviews(p, pl), 60);
 }
+// Aperçus animés : « Avant » = source recadrée en boucle, « Après » = simulation à la résolution/fluidité de sortie.
+const PV = { p: null, pl: null, vid: null, raf: 0, lastA: 0, img: 0, lastI: 0 };
+function previewVideo() {
+  if (S.src?.type !== 'video') return null;
+  if (!PV.vid || PV.vid.dataset.src !== S.src.el.src) {
+    const v = document.createElement('video'); v.muted = true; v.playsInline = true; v.loop = false; v.preload = 'auto';
+    v.setAttribute('playsinline', ''); v.setAttribute('muted', ''); v.src = S.src.el.src; v.dataset.src = S.src.el.src; PV.vid = v;
+  }
+  return PV.vid;
+}
 async function drawPreviews(p, pl) {
-  const src = S.src; let el = src.type === 'video' ? src.el : src.imgs[0];
-  if (src.type === 'video') await seek(el, p.start + .01);
   await document.fonts.load(`20px ${p.font.split(',')[0]}`).catch(() => {});
-  const b = $('cvBefore'), bw = Math.min(640, Math.round(pl.crop.w)), bh = Math.round(bw * pl.crop.h / pl.crop.w);
-  b.width = bw; b.height = bh; drawFrame(b.getContext('2d'), el, src.w, src.h, bw, bh, p);
-  if (!S.out) { const a = $('cvAfter'); a.hidden = false; $('gifOut').hidden = true;
-    a.width = pl.width; a.height = pl.height; drawFrame(a.getContext('2d'), el, src.w, src.h, pl.width, pl.height, p); }
+  PV.p = p; PV.pl = pl;
+  const asp = pl.crop.w / pl.crop.h;
+  const b = $('cvBefore'), bw = Math.min(640, Math.max(2, Math.round(pl.crop.w))), bh = Math.max(2, Math.round(bw / asp));
+  if (b.width !== bw || b.height !== bh) { b.width = bw; b.height = bh; }
+  const a = $('cvAfter'); if (a.width !== pl.width || a.height !== pl.height) { a.width = pl.width; a.height = pl.height; }
+  document.querySelectorAll('.compare .pv').forEach(x => x.style.aspectRatio = `${pl.width} / ${pl.height}`);
+  if (!S.out) { a.hidden = false; $('gifOut').hidden = true; }
+  const v = previewVideo();
+  if (v) { v.playbackRate = p.speed; if (v.currentTime < p.start || v.currentTime > p.end) v.currentTime = p.start; v.play().catch(() => {}); }
+  if (!PV.raf) PV.raf = requestAnimationFrame(tick);
+}
+function tick(now) {
+  PV.raf = requestAnimationFrame(tick);
+  const p = PV.p, pl = PV.pl, src = S.src; if (!p || !src || document.hidden) return;
+  let el;
+  if (src.type === 'video') { el = PV.vid; if (!el || el.readyState < 2) return;
+    if (el.currentTime >= p.end - .02 || el.currentTime < p.start - .05 || el.ended) { el.currentTime = p.start; el.play().catch(() => {}); }
+  } else {
+    if (now - PV.lastI >= p.delay / p.speed) { PV.img = (PV.img + 1) % src.imgs.length; PV.lastI = now; }
+    el = src.imgs[PV.img % src.imgs.length];
+  }
+  const b = $('cvBefore'); drawFrame(b.getContext('2d'), el, src.w, src.h, b.width, b.height, p);
+  const step = src.type === 'video' ? 1000 / p.fps : 0;
+  if (!S.out && now - PV.lastA >= step) { PV.lastA = now; const a = $('cvAfter'); drawFrame(a.getContext('2d'), el, src.w, src.h, a.width, a.height, p); }
 }
 function setBadge(v, estimated) {
   lastBadge = [v, estimated]; const el = $('xBadge'); el.className = 'badge ' + (v.ok ? 'ok' : 'ko');

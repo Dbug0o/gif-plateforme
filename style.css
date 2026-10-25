@@ -42,6 +42,8 @@ input[type=color]{width:48px;height:44px;border:none;background:none}
 figure{margin:0;background:#000;border:1px solid #00f0ff44;border-radius:8px;overflow:hidden;display:flex;flex-direction:column}
 figcaption{font-size:.75rem;padding:.3rem;color:var(--cyan);background:#0b0420}
 figure canvas,figure img{width:100%;height:auto;image-rendering:pixelated;display:block}
+figure .pv{width:100%;height:auto;aspect-ratio:1;max-height:60vh;object-fit:contain;background:#000;flex:none}
+.compare{align-items:start}
 #progress{margin-top:.6rem;display:flex;gap:.5rem;align-items:center;font-size:.85rem}
 .checks{list-style:none;padding:0;font-size:.88rem}.checks li{padding:.2rem 0}
 .search{font-size:1.1rem!important;border-color:var(--cyan)!important;box-shadow:0 0 12px #00f0ff44}
@@ -62,3 +64,4 @@ dialog::backdrop{background:#000b}dialog img{width:100%;border-radius:8px}
 .gGrid{display:grid;gap:.2rem 1rem;grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
 .guide ul{margin:.2rem 0;padding-left:1.1rem;font-size:.9rem}.guide li{margin:.2rem 0}
 .guide .tip{border-left:3px solid var(--yel);background:#ffe60014;padding:.5rem .7rem;border-radius:6px;font-size:.92rem}
+[hidden]{display:none!important}
