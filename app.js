@@ -255,7 +255,14 @@ async function openGif(g) {
   $('mDl').href = u; $('mDl').download = g.title.replace(/[^\w\- ]+/g, '') + '.gif';
   $('mDl').onclick = () => { g.downloads++; putGif(g); };
   $('mX').href = xIntentUrl(g.title);
-  $('mX').onclick = () => { g.shares = (g.shares || 0) + 1; putGif(g); };
+  $('mX').onclick = async (e) => {
+    g.shares = (g.shares || 0) + 1; putGif(g);
+    const f = new File([g.blob], (g.title.replace(/[^\w\- ]+/g, '') || 'neogif') + '.gif', { type: 'image/gif' });
+    if (navigator.canShare && navigator.canShare({ files: [f] })) {
+      e.preventDefault();
+      try { await navigator.share({ files: [f], text: g.title }); } catch (err) { if (err.name !== 'AbortError') location.href = $('mX').href; }
+    }
+  };
   $('mDel').onclick = async () => { if (confirm(t('confirmDel'))) { await tx('readwrite', s => s.delete(g.id)); renderLib(); } };
   $('modal').showModal(); $('modal').onclose = () => renderLib();
 }
