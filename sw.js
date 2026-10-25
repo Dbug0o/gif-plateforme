@@ -1,6 +1,6 @@
 // Neo GIF service worker: network-first for the app shell, never caches Supabase.
-const CACHE = 'neogif-v16';
-const SHELL = ['./', './index.html', './style.css?v=16', './app.js?v=16', './core.js?v=16', './i18n.js?v=16', './effects.js?v=16', './gifenc.js?v=16',
+const CACHE = 'neogif-v17';
+const SHELL = ['./', './index.html', './style.css?v=17', './app.js?v=17', './core.js?v=17', './i18n.js?v=17', './effects.js?v=17', './gifenc.js?v=17',
   './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });

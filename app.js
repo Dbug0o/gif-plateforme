@@ -1,7 +1,7 @@
-import { GIFEncoder, quantize, applyPalette } from './gifenc.js?v=16';
-import { t, lang, LANGS, setLang, applyI18n } from './i18n.js?v=16';
-import { FX, fxTransform, fxApply } from './effects.js?v=16';
-import { X_LIMITS, validateX, planOutput, frameCount, parseTags, matches, trendScore, xIntentUrl } from './core.js?v=16';
+import { GIFEncoder, quantize, applyPalette } from './gifenc.js?v=17';
+import { t, lang, LANGS, setLang, applyI18n } from './i18n.js?v=17';
+import { FX, fxTransform, fxApply } from './effects.js?v=17';
+import { X_LIMITS, validateX, planOutput, frameCount, parseTags, matches, trendScore, xIntentUrl } from './core.js?v=17';
 
 const $ = id => document.getElementById(id);
 const S = { fx: [], src: null, crop: 'orig', ignoreWarn: false, out: null, busy: false };
@@ -222,7 +222,8 @@ $('btnMake').onclick = async () => {
     }
     const blob = new Blob([bytes], { type: 'image/gif' });
     S.out = { blob, width: pl.width, height: pl.height, frames: pl.frames, bytes: bytes.length };
-    const url = URL.createObjectURL(blob);
+    if (S.outUrl) URL.revokeObjectURL(S.outUrl); // l'ancien lien n'est libéré qu'à la génération suivante
+    const url = S.outUrl = URL.createObjectURL(blob);
     $('gifOut').src = url; $('gifOut').hidden = false; $('cvAfter').hidden = true;
     $('dlOut').href = url; $('dlOut').download = (outTitle().replace(/[^\w\- ]+/g, '') || 'neogif') + '.gif'; $('resultActions').hidden = false; $('toLib').disabled = false; $('libMsg').textContent = '';
     const v = validateX({ bytes: bytes.length, width: pl.width, height: pl.height, frames: pl.frames });
@@ -236,6 +237,23 @@ $('btnMake').onclick = async () => {
 const renderTags = () => { $('tagPrev').innerHTML = parseTags($('gifTags').value).map(x => `<span class="tagPill">${esc(x)}</span>`).join(''); };
 $('gifTags').addEventListener('input', renderTags);
 $('gifTitle').addEventListener('input', () => { if (S.out) S.out.saved = false; });
+// ---------- Téléchargement robuste (Android / PWA installée) ----------
+function saveBlob(blob, name) {
+  const u = URL.createObjectURL(blob), a = document.createElement('a');
+  a.href = u; a.download = name; a.rel = 'noopener'; a.style.display = 'none';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(u), 120e3);
+}
+async function shareOrOpen(blob, url, name) {
+  try { const f = blob && new File([blob], name, { type: 'image/gif' });
+    if (f && navigator.canShare?.({ files: [f] })) { await navigator.share({ files: [f], title: name }); return; } }
+  catch (e) { if (e.name === 'AbortError') return; }
+  if (url) window.open(url, '_blank', 'noopener');
+}
+$('dlOut').addEventListener('click', e => {
+  if (!S.out?.blob) return; e.preventDefault();
+  try { saveBlob(S.out.blob, $('dlOut').download || 'neogif.gif'); } catch { shareOrOpen(S.out.blob, S.outUrl, 'neogif.gif'); }
+});
 const outTitle = () => $('gifTitle').value.trim() || (S.src?.name || t('myGif')).replace(/\.\w+$/, '');
 $('toLib').onclick = async () => {
   if (!S.out || S.out.saved) return; const { saved, ...o } = S.out;
@@ -286,7 +304,8 @@ async function addGif(g) {
 async function deleteGif(g) { const path = await rpc('delete_gif', { gif_id: g.id, token: OWNER });
   await sb('/storage/v1/object/gifs/' + path, { method: 'DELETE' }).catch(() => {}); }
 const blobCache = new Map();
-async function gifBlob(g) { if (!blobCache.has(g.id)) blobCache.set(g.id, fetch(g.url).then(r => r.blob())); return blobCache.get(g.id); }
+async function gifBlob(g) { if (!blobCache.has(g.id)) blobCache.set(g.id, fetch(g.url, { mode: 'cors' }).then(r => { if (!r.ok) throw new Error(r.status); return r.blob(); }).then(b => new Blob([b], { type: 'image/gif' })));
+  return blobCache.get(g.id).catch(e => { blobCache.delete(g.id); throw e; }); }
 window.NEOGIF.lib = { allGifs, addGif };
 
 async function gifSize(blob) { const img = new Image(); img.src = URL.createObjectURL(blob); await img.decode().catch(() => {}); return [img.naturalWidth, img.naturalHeight]; }
@@ -332,15 +351,19 @@ async function renderLib({ cached = false, force = false } = {}) {
   document.querySelectorAll('.tile').forEach(el => el.onclick = () => openGif(items.find(i => i.id === el.dataset.id)));
 }
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-let dlUrl;
 async function openGif(g) {
   bump(g, 'views'); const v = validateX(g);
   $('mImg').src = g.url; $('mTitle').textContent = g.title; $('mTags').textContent = g.tags.join(' · ');
   $('mMeta').textContent = `${g.width}×${g.height} · ${g.frames} ${t('frames')} · ${(g.bytes / 1e6).toFixed(2)} ${t('mb')} · ${g.views} ${t('views')} · ${t(v.ok ? 'ready' : 'notReady')}`;
   const fname = (g.title.replace(/[^\w\- ]+/g, '') || 'neogif') + '.gif';
   $('mDl').href = g.url; $('mDl').download = fname;
-  gifBlob(g).then(b => { if (dlUrl) URL.revokeObjectURL(dlUrl); dlUrl = URL.createObjectURL(b); $('mDl').href = dlUrl; }).catch(() => {});
-  $('mDl').onclick = () => bump(g, 'downloads');
+  gifBlob(g).catch(() => {}); // préchargement
+  $('mDl').onclick = async e => {
+    e.preventDefault(); bump(g, 'downloads');
+    let b = null;
+    try { b = await gifBlob(g); if (!b.size) throw new Error('empty'); saveBlob(b, fname); }
+    catch { blobCache.delete(g.id); await shareOrOpen(b, g.url, fname); }
+  };
   $('mX').href = xIntentUrl(g.title);
   $('mX').onclick = async (e) => {
     bump(g, 'shares');
