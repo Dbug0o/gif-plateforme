@@ -6,8 +6,7 @@ import { X_LIMITS, validateX, planOutput, frameCount, parseTags, matches, trendS
 
 const $ = id => document.getElementById(id);
 const MOBILE = !!(navigator.userAgentData?.mobile) || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-const BUDGET = 5_000_000; // téléversements + mode léger
-let EDIT_BUDGET = BUDGET; // éditeur : 5 Mo (léger) ou 15 Mo (qualité max web)
+const BUDGET = 5_000_000; // partout
 const S = { fx: [], src: null, crop: 'orig', ignoreWarn: false, out: null, busy: false };
 window.NEOGIF = S; // pour les tests
 let lastBadge = null, lastQ = null;
@@ -96,7 +95,7 @@ function nFrames(p) {
 }
 function currentPlan(p = P(), scaleOverride = 1) {
   const c = cropRect(S.src.w, S.src.h, p);
-  const pl = planOutput({ cropW: c.w, cropH: c.h, frames: nFrames(p), maxWidth: p.maxW, maxBytes: EDIT_BUDGET });
+  const pl = planOutput({ cropW: c.w, cropH: c.h, frames: nFrames(p), maxWidth: p.maxW, maxBytes: BUDGET });
   if (scaleOverride < 1) { pl.width = Math.floor(pl.width * scaleOverride) & ~1; pl.height = Math.floor(pl.height * scaleOverride) & ~1; }
   return { ...pl, crop: c };
 }
@@ -133,7 +132,7 @@ function update() {
   $('warn').querySelector('b').textContent = t(S.src.type === 'video' ? 'warnVideo' : 'warnGif');
   setQuality(pl.quality);
   $('estInfo').textContent = t('est', { w: pl.width, h: pl.height, n: pl.frames, cap: pl.framesCapped ? t('capped') : '', mb: (pl.estBytes/1e6).toFixed(1), u: t('mb') }) +
-    (pl.reduction < 1 ? t('reduced', { p: Math.round(pl.reduction * 100), w: pl.wantedW, h: pl.wantedH }) : '.') + (' ' + t(EDIT_BUDGET > BUDGET ? 'maxMode' : 'mobileMode'));
+    (pl.reduction < 1 ? t('reduced', { p: Math.round(pl.reduction * 100), w: pl.wantedW, h: pl.wantedH }) : '.') + (' ' + t('mobileMode'));
   clearTimeout(tmr); tmr = setTimeout(() => drawPreviews(p, pl), 60);
 }
 // Aperçus animés : « Avant » = source recadrée en boucle, « Après » = simulation à la résolution/fluidité de sortie.
@@ -204,10 +203,6 @@ $('fixFps').onclick = () => { for (let i = 0; i < 30 && heavy() && +$('fps').val
 $('fixCrop').onclick = () => { document.querySelector('[data-crop="1:1"]').click(); if (heavy()) $('maxW').value = 400; resetOut(); update(); };
 $('fixIgnore').onclick = () => { S.ignoreWarn = true; update(); };
 
-function setMode(max) { EDIT_BUDGET = max ? X_LIMITS.maxBytes : BUDGET;
-  $('modeLight').classList.toggle('active', !max); $('modeMax').classList.toggle('active', max); $('modeWarn').hidden = !max;
-  if (S.src) { resetOut(); update(); } }
-$('modeLight').onclick = () => setMode(false); $('modeMax').onclick = () => setMode(true);
 // ---------- Encodage ----------
 async function encode(p, pl, onProg) {
   const src = S.src, W = pl.width, H = pl.height, cv = document.createElement('canvas');
@@ -235,8 +230,8 @@ $('btnMake').onclick = async () => {
     for (let attempt = 1; attempt <= 4; attempt++) {
       pl = currentPlan(p, scale);
       bytes = await encode(p, pl, f => { $('pBar').style.width = (f * 100) + '%'; $('pTxt').textContent = t('attempt', { a: attempt, p: Math.round(f * 100) }); });
-      if (bytes.length <= EDIT_BUDGET) break;
-      scale *= Math.sqrt(EDIT_BUDGET * 0.93 / bytes.length); // trop lourd : on réduit et on recommence
+      if (bytes.length <= BUDGET) break;
+      scale *= Math.sqrt(BUDGET * 0.93 / bytes.length); // trop lourd : on réduit et on recommence
     }
     const blob = new Blob([bytes], { type: 'image/gif' });
     S.out = { blob, width: pl.width, height: pl.height, frames: pl.frames, bytes: bytes.length };
