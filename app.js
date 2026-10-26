@@ -1,8 +1,8 @@
-import { GIFEncoder, quantize, applyPalette } from './gifenc.js?v=27';
-import { t, lang, LANGS, setLang, applyI18n } from './i18n.js?v=27';
-import { FX, fxTransform, fxApply } from './effects.js?v=27';
-import { decodeGif } from './gifdec.js?v=27';
-import { X_LIMITS, validateX, planOutput, frameCount, parseTags, matches, trendScore, xIntentUrl } from './core.js?v=27';
+import { GIFEncoder, quantize, applyPalette } from './gifenc.js?v=28';
+import { t, lang, LANGS, setLang, applyI18n } from './i18n.js?v=28';
+import { FX, fxTransform, fxApply } from './effects.js?v=28';
+import { decodeGif } from './gifdec.js?v=28';
+import { X_LIMITS, validateX, planOutput, frameCount, parseTags, matches, trendScore, xIntentUrl } from './core.js?v=28';
 
 const $ = id => document.getElementById(id);
 const MOBILE = !!(navigator.userAgentData?.mobile) || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
@@ -318,6 +318,7 @@ async function addGif(g) {
       id, path, owner_token: OWNER, title: String(g.title || '').slice(0, 120), tags: (g.tags || []).slice(0, 20),
       width: g.width | 0, height: g.height | 0, frames: g.frames | 0, size: blob.size } });
   } catch (e) { sb('/storage/v1/object/gifs/' + path, { method: 'DELETE' }).catch(() => {}); throw e; }
+  mine.add(id);
   return id;
 }
 async function deleteGif(g) { const path = await rpc('delete_gif', { gif_id: g.id, token: OWNER });
@@ -405,8 +406,10 @@ const libVisible = () => $('biblio').classList.contains('active');
 function clearLib() { $('trending').innerHTML = ''; $('allGifs').innerHTML = ''; } // libère les GIF animés décodés
 async function loadLib(force) {
   if (!force && LIB.items && Date.now() - LIB.at < 60e3) return LIB.items;
-  if (!LIB.p) LIB.p = allGifs().then(items => { LIB.items = items; LIB.at = Date.now();
-    rpc('is_mine', { gif_ids: items.map(i => i.id), token: OWNER }).then(ids => { mine = new Set(ids || []); }).catch(() => {});
+  if (!LIB.p) LIB.p = allGifs().then(async items => {
+    const args = { gif_ids: items.map(i => i.id), token: OWNER };
+    try { mine = new Set((await rpc('is_mine', args).catch(() => rpc('is_mine', args))) || []); } catch {}
+    LIB.items = items; LIB.at = Date.now();
     return items; }).finally(() => { LIB.p = null; });
   return LIB.p;
 }
@@ -450,9 +453,12 @@ async function openGif(g) {
     } catch (err) { if (err.name !== 'AbortError') location.href = $('mX').href; }
   };
   $('mDel').style.display = mine.has(g.id) ? '' : 'none';
+  if (!mine.has(g.id)) rpc('is_mine', { gif_ids: [g.id], token: OWNER })
+    .then(ids => { if ((ids || []).includes(g.id)) { mine.add(g.id); if ($('modal').open) $('mDel').style.display = ''; } }).catch(() => {});
   $('mDel').onclick = async () => { if (!confirm(t('confirmDel'))) return;
     const b = $('mDel'); if (b.disabled) return; b.disabled = true;
-    try { await deleteGif(g); } catch (e) { if (!/not_owner/.test(e.message)) { b.disabled = false; alert(t('error') + e.message); return; } }
+    try { await deleteGif(g); } catch (e) { b.disabled = false; alert(/not_owner/.test(e.message) ? t('notOwner') : t('error') + e.message); return; }
+    mine.delete(g.id);
     b.disabled = false; LIB.at = 0; $('modal').onclose = () => renderLib({ force: true }); $('modal').close(); toast(t('delDone')); };
   $('modal').showModal(); $('modal').onclose = () => renderLib({ cached: !!LIB.at });
 }

@@ -129,3 +129,4 @@ Object.assign(D.en, { loadMore:'Load more' });
 Object.assign(D.es, { loadMore:'Ver más' });
 Object.assign(D.ja, { loadMore:'もっと見る' });
 Object.assign(D.pt, { loadMore:'Ver mais' });
+Object.assign(D.fr,{notOwner:"Impossible de supprimer : ce GIF n'a pas été publié depuis cet appareil."});Object.assign(D.en,{notOwner:"Can't delete: this GIF wasn't published from this device."});Object.assign(D.es,{notOwner:'No se puede eliminar: este GIF no se publicó desde este dispositivo.'});Object.assign(D.pt,{notOwner:'Não é possível excluir: este GIF não foi publicado deste dispositivo.'});Object.assign(D.ja,{notOwner:'削除できません：このGIFはこの端末から公開されていません。'});
