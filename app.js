@@ -204,11 +204,12 @@ $('fixCrop').onclick = () => { document.querySelector('[data-crop="1:1"]').click
 $('fixIgnore').onclick = () => { S.ignoreWarn = true; update(); };
 
 // ---------- Encodage ----------
-async function encode(p, pl, onProg) {
+async function encode(p, pl, onProg, sample) {
   const src = S.src, W = pl.width, H = pl.height, cv = document.createElement('canvas');
   cv.width = W; cv.height = H; const ctx = cv.getContext('2d', { willReadFrequently: true });
   const gif = GIFEncoder(); const n = pl.frames;
-  for (let i = 0; i < n; i++) {
+  const list = sample ? [...new Set(Array.from({ length: Math.min(n, sample) }, (_, k) => Math.floor(k * n / Math.min(n, sample))))] : null;
+  for (let j = 0; j < (list ? list.length : n); j++) { const i = list ? list[j] : j;
     let el, delay;
     if (src.type === 'video') { el = src.el; await seek(el, Math.min(src.dur - .01, p.start + i * p.speed / p.fps)); delay = 1000 / p.fps; }
     else if (p.fx.length) { delay = 1000 / p.fxFps; el = src.imgs[Math.floor(i * delay / p.delay) % src.imgs.length]; }
@@ -217,16 +218,23 @@ async function encode(p, pl, onProg) {
     const { data } = ctx.getImageData(0, 0, W, H);
     const palette = quantize(data, 256); const idx = applyPalette(data, palette);
     gif.writeFrame(idx, W, H, { palette, delay: Math.max(20, Math.round(delay)) });
-    onProg((i + 1) / n);
-    if (i % 2 === 0) await new Promise(r => setTimeout(r));
+    onProg(list ? (j + 1) / list.length : (i + 1) / n);
+    if (j % 2 === 0) await new Promise(r => setTimeout(r));
   }
-  gif.finish(); return gif.bytes();
+  gif.finish(); const out = gif.bytes(); if (list) out.est = out.length * n / list.length; return out;
 }
 $('btnMake').onclick = async () => {
   if (!S.src || S.busy) return; S.busy = true; $('btnMake').disabled = true; $('progress').hidden = false;
   const p = P(); let scale = 1, bytes, pl;
   try {
     await document.fonts.load(`20px ${p.font.split(',')[0]}`).catch(() => {});
+    // Estimation rapide sur quelques images : on trouve la bonne taille avant l'encodage complet
+    pl = currentPlan(p, scale);
+    if (pl.frames > 12) for (let k = 0; k < 3; k++) {
+      const est = (await encode(p, pl, f => { $('pBar').style.width = (f * 100) + '%'; $('pTxt').textContent = t('attempt', { a: 1, p: Math.round(f * 30) }); }, 8)).est;
+      if (est <= BUDGET * 0.9) break;
+      scale *= Math.sqrt(BUDGET * 0.85 / est); pl = currentPlan(p, scale);
+    }
     for (let attempt = 1; attempt <= 4; attempt++) {
       pl = currentPlan(p, scale);
       bytes = await encode(p, pl, f => { $('pBar').style.width = (f * 100) + '%'; $('pTxt').textContent = t('attempt', { a: attempt, p: Math.round(f * 100) }); });
