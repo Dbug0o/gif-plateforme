@@ -1,7 +1,7 @@
-import { GIFEncoder, quantize, applyPalette } from './gifenc.js?v=23';
-import { t, lang, LANGS, setLang, applyI18n } from './i18n.js?v=23';
-import { FX, fxTransform, fxApply } from './effects.js?v=23';
-import { X_LIMITS, validateX, planOutput, frameCount, parseTags, matches, trendScore, xIntentUrl } from './core.js?v=23';
+import { GIFEncoder, quantize, applyPalette } from './gifenc.js?v=24';
+import { t, lang, LANGS, setLang, applyI18n } from './i18n.js?v=24';
+import { FX, fxTransform, fxApply } from './effects.js?v=24';
+import { X_LIMITS, validateX, planOutput, frameCount, parseTags, matches, trendScore, xIntentUrl } from './core.js?v=24';
 
 const $ = id => document.getElementById(id);
 const S = { fx: [], src: null, crop: 'orig', ignoreWarn: false, out: null, busy: false };
@@ -383,7 +383,9 @@ async function openGif(g) {
   };
   $('mDel').style.display = mine.has(g.id) ? '' : 'none';
   $('mDel').onclick = async () => { if (!confirm(t('confirmDel'))) return;
-    try { await deleteGif(g); LIB.at = 0; $('modal').close(); } catch (e) { alert(t('error') + e.message); } };
+    const b = $('mDel'); if (b.disabled) return; b.disabled = true;
+    try { await deleteGif(g); } catch (e) { if (!/not_owner/.test(e.message)) { b.disabled = false; alert(t('error') + e.message); return; } }
+    b.disabled = false; LIB.at = 0; $('modal').onclose = () => renderLib({ force: true }); $('modal').close(); toast(t('delDone')); };
   $('modal').showModal(); $('modal').onclose = () => renderLib({ cached: !!LIB.at });
 }
 
