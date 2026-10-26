@@ -1,7 +1,7 @@
-import { GIFEncoder, quantize, applyPalette } from './gifenc.js?v=21';
-import { t, lang, LANGS, setLang, applyI18n } from './i18n.js?v=21';
-import { FX, fxTransform, fxApply } from './effects.js?v=21';
-import { X_LIMITS, validateX, planOutput, frameCount, parseTags, matches, trendScore, xIntentUrl } from './core.js?v=21';
+import { GIFEncoder, quantize, applyPalette } from './gifenc.js?v=22';
+import { t, lang, LANGS, setLang, applyI18n } from './i18n.js?v=22';
+import { FX, fxTransform, fxApply } from './effects.js?v=22';
+import { X_LIMITS, validateX, planOutput, frameCount, parseTags, matches, trendScore, xIntentUrl } from './core.js?v=22';
 
 const $ = id => document.getElementById(id);
 const S = { fx: [], src: null, crop: 'orig', ignoreWarn: false, out: null, busy: false };
