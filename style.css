@@ -94,3 +94,5 @@ dialog::backdrop{background:#000b}dialog img{width:100%;border-radius:8px}
 
 .hero{text-align:center;border-color:#ff2bd6;box-shadow:0 0 18px #ff2bd655}.hero p{opacity:.85;margin:.3rem 0 .9rem}
 .upbox summary{cursor:pointer;font-weight:700;color:#00f0ff;padding:.2rem 0}.upbox[open] summary{margin-bottom:.7rem}
+
+#toolbox{margin-bottom:1rem}.chips{display:flex;flex-wrap:wrap;gap:.45rem;margin:.5rem 0}.chips span{border:1px solid #ff2bd6;color:#ffd1f5;border-radius:999px;padding:.3rem .7rem;font-size:.85rem;box-shadow:0 0 8px #ff2bd644;background:#1a0838}.chips span:nth-child(even){border-color:#00f0ff;color:#c9fbff;box-shadow:0 0 8px #00f0ff44}

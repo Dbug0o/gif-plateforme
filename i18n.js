@@ -92,6 +92,11 @@ Object.assign(D.en,{heroH:'Make your own GIF',heroP:'Turn your video or image in
 Object.assign(D.es,{heroH:'Crea tu propio GIF',heroP:'Convierte tu vídeo o imagen en GIF para 𝕏: recorte, texto meme, efectos neón y glitch.',heroBtn:'⚡ Crear un GIF',upSum:'¿Ya tienes un GIF? Súbelo'});
 Object.assign(D.pt,{heroH:'Crie seu próprio GIF',heroP:'Transforme seu vídeo ou imagem em GIF para 𝕏: corte, texto meme, efeitos neon e glitch.',heroBtn:'⚡ Criar um GIF',upSum:'Já tem um GIF? Envie'});
 Object.assign(D.ja,{heroH:'自分だけのGIFを作ろう',heroP:'動画や画像を𝕏用GIFに:トリミング、ミーム文字、ネオン・グリッチ効果。',heroBtn:'⚡ GIFを作る',upSum:'GIFをお持ちですか?アップロード'});
+Object.assign(D.fr,{tbH:'Tes outils',tb1:'Recadrage',tb2:'Texte meme',tb3:'Découpe vidéo',tb4:'Vitesse',tb5:'Néon',tb6:'Tremblement',tb7:'Étincelles',tb8:'Couleurs',tb9:'Pluie',tb10:'Aperçu avant/après',tb11:'Validation 𝕏',tbP:'Choisis ta vidéo ou ton image pour commencer.'});
+Object.assign(D.en,{tbH:'Your tools',tb1:'Crop',tb2:'Meme text',tb3:'Video trim',tb4:'Speed',tb5:'Neon',tb6:'Shake',tb7:'Sparkles',tb8:'Colors',tb9:'Rain',tb10:'Before/after preview',tb11:'𝕏 check',tbP:'Pick your video or image to start.'});
+Object.assign(D.es,{tbH:'Tus herramientas',tb1:'Recorte',tb2:'Texto meme',tb3:'Corte de vídeo',tb4:'Velocidad',tb5:'Neón',tb6:'Temblor',tb7:'Destellos',tb8:'Colores',tb9:'Lluvia',tb10:'Vista antes/después',tb11:'Validación 𝕏',tbP:'Elige tu vídeo o imagen para empezar.'});
+Object.assign(D.pt,{tbH:'Suas ferramentas',tb1:'Corte',tb2:'Texto meme',tb3:'Corte de vídeo',tb4:'Velocidade',tb5:'Neon',tb6:'Tremor',tb7:'Brilhos',tb8:'Cores',tb9:'Chuva',tb10:'Prévia antes/depois',tb11:'Validação 𝕏',tbP:'Escolha seu vídeo ou imagem para começar.'});
+Object.assign(D.ja,{tbH:'ツール',tb1:'トリミング',tb2:'ミーム文字',tb3:'動画カット',tb4:'速度',tb5:'ネオン',tb6:'シェイク',tb7:'きらめき',tb8:'カラー',tb9:'雨',tb10:'ビフォー/アフター',tb11:'𝕏チェック',tbP:'動画か画像を選んでスタート。'});
 export const t = (k, v = {}) => { const s = D[lang][k] ?? D.fr[k] ?? k; return s.replace(/\{(\w+)\}/g, (_, x) => v[x] ?? ''); };
 export function applyI18n(root = document) {
   document.documentElement.lang = LANGS[lang][1]; document.title = t('title');

@@ -1,7 +1,7 @@
-import { GIFEncoder, quantize, applyPalette } from './gifenc.js?v=22';
-import { t, lang, LANGS, setLang, applyI18n } from './i18n.js?v=22';
-import { FX, fxTransform, fxApply } from './effects.js?v=22';
-import { X_LIMITS, validateX, planOutput, frameCount, parseTags, matches, trendScore, xIntentUrl } from './core.js?v=22';
+import { GIFEncoder, quantize, applyPalette } from './gifenc.js?v=23';
+import { t, lang, LANGS, setLang, applyI18n } from './i18n.js?v=23';
+import { FX, fxTransform, fxApply } from './effects.js?v=23';
+import { X_LIMITS, validateX, planOutput, frameCount, parseTags, matches, trendScore, xIntentUrl } from './core.js?v=23';
 
 const $ = id => document.getElementById(id);
 const S = { fx: [], src: null, crop: 'orig', ignoreWarn: false, out: null, busy: false };
@@ -42,7 +42,7 @@ $('inImages').onchange = async e => {
 };
 function openEditor() {
   const isV = S.src.type === 'video';
-  $('editor').hidden = false; $('videoOpts').hidden = !isV; $('imageOpts').hidden = isV; $('fpsWrap').hidden = !isV; $('fxCard').hidden = false; $('fxLoop').hidden = isV; $('fxHint').textContent = t(isV ? 'fxHintVideo' : 'fxHint');
+  $('editor').hidden = false; $('toolbox').hidden = true; $('videoOpts').hidden = !isV; $('imageOpts').hidden = isV; $('fpsWrap').hidden = !isV; $('fxCard').hidden = false; $('fxLoop').hidden = isV; $('fxHint').textContent = t(isV ? 'fxHintVideo' : 'fxHint');
   if (!$('gifTitle').value) $('gifTitle').value = (S.src.name || t('myGif')).replace(/\.\w+$/, '');
   $('libMsg').textContent = '';
   S.ignoreWarn = false; resetOut(); update();
