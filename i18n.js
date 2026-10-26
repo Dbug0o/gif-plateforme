@@ -98,6 +98,7 @@ Object.assign(D.es,{tbH:'Tus herramientas',tb1:'Recorte',tb2:'Texto meme',tb3:'C
 Object.assign(D.pt,{tbH:'Suas ferramentas',tb1:'Corte',tb2:'Texto meme',tb3:'Corte de vídeo',tb4:'Velocidade',tb5:'Neon',tb6:'Tremor',tb7:'Brilhos',tb8:'Cores',tb9:'Chuva',tb10:'Prévia antes/depois',tb11:'Validação 𝕏',tbP:'Escolha seu vídeo ou imagem para começar.'});
 Object.assign(D.ja,{tbH:'ツール',tb1:'トリミング',tb2:'ミーム文字',tb3:'動画カット',tb4:'速度',tb5:'ネオン',tb6:'シェイク',tb7:'きらめき',tb8:'カラー',tb9:'雨',tb10:'ビフォー/アフター',tb11:'𝕏チェック',tbP:'動画か画像を選んでスタート。'});
 Object.assign(D.fr,{delDone:'🗑️ GIF supprimé'});Object.assign(D.en,{delDone:'🗑️ GIF deleted'});Object.assign(D.es,{delDone:'🗑️ GIF eliminado'});Object.assign(D.pt,{delDone:'🗑️ GIF excluído'});Object.assign(D.ja,{delDone:'🗑️ GIFを削除しました'});
+Object.assign(D.fr,{mobileMode:'📱 Mode mobile : GIF léger (5 Mo max) pour passer partout.'});Object.assign(D.en,{mobileMode:'📱 Mobile mode: light GIF (5 MB max) so it works everywhere.'});Object.assign(D.es,{mobileMode:'📱 Modo móvil: GIF ligero (5 MB máx.).'});Object.assign(D.pt,{mobileMode:'📱 Modo celular: GIF leve (5 MB no máx.).'});Object.assign(D.ja,{mobileMode:'📱 モバイルモード:軽量GIF(最大5MB)。'});
 export const t = (k, v = {}) => { const s = D[lang][k] ?? D.fr[k] ?? k; return s.replace(/\{(\w+)\}/g, (_, x) => v[x] ?? ''); };
 export function applyI18n(root = document) {
   document.documentElement.lang = LANGS[lang][1]; document.title = t('title');

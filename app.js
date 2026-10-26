@@ -1,9 +1,11 @@
-import { GIFEncoder, quantize, applyPalette } from './gifenc.js?v=24';
-import { t, lang, LANGS, setLang, applyI18n } from './i18n.js?v=24';
-import { FX, fxTransform, fxApply } from './effects.js?v=24';
-import { X_LIMITS, validateX, planOutput, frameCount, parseTags, matches, trendScore, xIntentUrl } from './core.js?v=24';
+import { GIFEncoder, quantize, applyPalette } from './gifenc.js?v=25';
+import { t, lang, LANGS, setLang, applyI18n } from './i18n.js?v=25';
+import { FX, fxTransform, fxApply } from './effects.js?v=25';
+import { X_LIMITS, validateX, planOutput, frameCount, parseTags, matches, trendScore, xIntentUrl } from './core.js?v=25';
 
 const $ = id => document.getElementById(id);
+const MOBILE = !!(navigator.userAgentData?.mobile) || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+const BUDGET = MOBILE ? 5_000_000 : 15_000_000;
 const S = { fx: [], src: null, crop: 'orig', ignoreWarn: false, out: null, busy: false };
 window.NEOGIF = S; // pour les tests
 let lastBadge = null, lastQ = null;
@@ -82,7 +84,7 @@ function nFrames(p) {
 }
 function currentPlan(p = P(), scaleOverride = 1) {
   const c = cropRect(S.src.w, S.src.h, p);
-  const pl = planOutput({ cropW: c.w, cropH: c.h, frames: nFrames(p), maxWidth: p.maxW });
+  const pl = planOutput({ cropW: c.w, cropH: c.h, frames: nFrames(p), maxWidth: p.maxW, maxBytes: BUDGET });
   if (scaleOverride < 1) { pl.width = Math.floor(pl.width * scaleOverride) & ~1; pl.height = Math.floor(pl.height * scaleOverride) & ~1; }
   return { ...pl, crop: c };
 }
@@ -119,7 +121,7 @@ function update() {
   $('warn').querySelector('b').textContent = t(S.src.type === 'video' ? 'warnVideo' : 'warnGif');
   setQuality(pl.quality);
   $('estInfo').textContent = t('est', { w: pl.width, h: pl.height, n: pl.frames, cap: pl.framesCapped ? t('capped') : '', mb: (pl.estBytes/1e6).toFixed(1), u: t('mb') }) +
-    (pl.reduction < 1 ? t('reduced', { p: Math.round(pl.reduction * 100), w: pl.wantedW, h: pl.wantedH }) : '.');
+    (pl.reduction < 1 ? t('reduced', { p: Math.round(pl.reduction * 100), w: pl.wantedW, h: pl.wantedH }) : '.') + (MOBILE ? ' ' + t('mobileMode') : '');
   clearTimeout(tmr); tmr = setTimeout(() => drawPreviews(p, pl), 60);
 }
 // Aperçus animés : « Avant » = source recadrée en boucle, « Après » = simulation à la résolution/fluidité de sortie.
@@ -217,8 +219,8 @@ $('btnMake').onclick = async () => {
     for (let attempt = 1; attempt <= 4; attempt++) {
       pl = currentPlan(p, scale);
       bytes = await encode(p, pl, f => { $('pBar').style.width = (f * 100) + '%'; $('pTxt').textContent = t('attempt', { a: attempt, p: Math.round(f * 100) }); });
-      if (bytes.length <= X_LIMITS.maxBytes) break;
-      scale *= Math.sqrt(X_LIMITS.maxBytes * 0.93 / bytes.length); // trop lourd : on réduit et on recommence
+      if (bytes.length <= BUDGET) break;
+      scale *= Math.sqrt(BUDGET * 0.93 / bytes.length); // trop lourd : on réduit et on recommence
     }
     const blob = new Blob([bytes], { type: 'image/gif' });
     S.out = { blob, width: pl.width, height: pl.height, frames: pl.frames, bytes: bytes.length };

@@ -16,14 +16,14 @@ export function validateX({ bytes, width, height, frames }) {
 }
 
 // Plan : à partir des dimensions recadrées + nb d'images, quelle échelle faut-il pour respecter X ?
-export function planOutput({ cropW, cropH, frames, maxWidth = 1280, bpp = BPP_EST }) {
+export function planOutput({ cropW, cropH, frames, maxWidth = 1280, bpp = BPP_EST, maxBytes = X_LIMITS.maxBytes }) {
   const L = X_LIMITS;
   let s = Math.min(1, maxWidth / cropW, L.maxW / cropW, L.maxH / cropH);
   const wantedW = Math.round(cropW * s), wantedH = Math.round(cropH * s);
   const f = Math.min(frames, L.maxFrames);
   const pix = wantedW * wantedH * f;
   const sPix = Math.sqrt(L.maxPixelFrames / pix);
-  const sBytes = Math.sqrt((L.maxBytes * 0.92) / (pix * bpp));
+  const sBytes = Math.sqrt((maxBytes * 0.92) / (pix * bpp));
   const extra = Math.min(1, sPix, sBytes);
   const w = Math.max(16, Math.floor(wantedW * extra) & ~1), h = Math.max(16, Math.floor(wantedH * extra) & ~1);
   const quality = qualityOf(w, h, extra);
