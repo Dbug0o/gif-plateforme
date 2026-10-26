@@ -1,11 +1,11 @@
-import { GIFEncoder, quantize, applyPalette } from './gifenc.js?v=25';
-import { t, lang, LANGS, setLang, applyI18n } from './i18n.js?v=25';
-import { FX, fxTransform, fxApply } from './effects.js?v=25';
-import { X_LIMITS, validateX, planOutput, frameCount, parseTags, matches, trendScore, xIntentUrl } from './core.js?v=25';
+import { GIFEncoder, quantize, applyPalette } from './gifenc.js?v=26';
+import { t, lang, LANGS, setLang, applyI18n } from './i18n.js?v=26';
+import { FX, fxTransform, fxApply } from './effects.js?v=26';
+import { X_LIMITS, validateX, planOutput, frameCount, parseTags, matches, trendScore, xIntentUrl } from './core.js?v=26';
 
 const $ = id => document.getElementById(id);
 const MOBILE = !!(navigator.userAgentData?.mobile) || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-const BUDGET = MOBILE ? 5_000_000 : 15_000_000;
+const BUDGET = 5_000_000; // partout
 const S = { fx: [], src: null, crop: 'orig', ignoreWarn: false, out: null, busy: false };
 window.NEOGIF = S; // pour les tests
 let lastBadge = null, lastQ = null;
@@ -121,7 +121,7 @@ function update() {
   $('warn').querySelector('b').textContent = t(S.src.type === 'video' ? 'warnVideo' : 'warnGif');
   setQuality(pl.quality);
   $('estInfo').textContent = t('est', { w: pl.width, h: pl.height, n: pl.frames, cap: pl.framesCapped ? t('capped') : '', mb: (pl.estBytes/1e6).toFixed(1), u: t('mb') }) +
-    (pl.reduction < 1 ? t('reduced', { p: Math.round(pl.reduction * 100), w: pl.wantedW, h: pl.wantedH }) : '.') + (MOBILE ? ' ' + t('mobileMode') : '');
+    (pl.reduction < 1 ? t('reduced', { p: Math.round(pl.reduction * 100), w: pl.wantedW, h: pl.wantedH }) : '.') + (' ' + t('mobileMode'));
   clearTimeout(tmr); tmr = setTimeout(() => drawPreviews(p, pl), 60);
 }
 // Aperçus animés : « Avant » = source recadrée en boucle, « Après » = simulation à la résolution/fluidité de sortie.
