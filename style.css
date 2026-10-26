@@ -19,7 +19,7 @@ h3{font-size:.95rem;color:var(--cyan);margin:1rem 0 .4rem}
 .neon{color:var(--pink);text-shadow:0 0 8px var(--pink)}
 label{display:block;margin:.4rem 0;font-size:.92rem}
 label.inline{display:inline-flex;align-items:center;gap:.4rem;margin:0}
-input[type=range]{width:100%;accent-color:var(--pink);height:28px}
+input[type=range]{width:100%;accent-color:var(--pink);height:28px;touch-action:pan-y}
 input[type=text],input[type=search],select,input[type=file]{width:100%;padding:.7rem;margin:.3rem 0;background:#0b0420;color:var(--txt);border:1px solid #ff2bd688;border-radius:10px;font-size:1rem}
 input[type=color]{width:48px;height:44px;border:none;background:none}
 .row{display:flex;gap:.5rem;align-items:center}.wrap{flex-wrap:wrap}

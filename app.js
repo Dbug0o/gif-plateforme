@@ -508,3 +508,11 @@ $('fabCreate').addEventListener('click', e => { if (S.out) { e.stopImmediateProp
 if (new URLSearchParams(location.search).get('tab') === 'creer') { history.replaceState(null, '', location.pathname); document.querySelector('.tab[data-tab="creer"]').click(); }
 
 $('heroCreate').onclick = () => $('fabCreate').click();
+
+// Anti-accroche : un défilement vertical ne doit pas bouger un curseur
+(function(){
+  let st=null;
+  document.addEventListener('touchstart',e=>{const t=e.target;if(t&&t.type==='range'){st={el:t,x:e.touches[0].clientX,y:e.touches[0].clientY,v:t.value,scroll:false};}},{passive:true,capture:true});
+  document.addEventListener('touchmove',e=>{if(!st)return;const dx=Math.abs(e.touches[0].clientX-st.x),dy=Math.abs(e.touches[0].clientY-st.y);if(!st.scroll&&dy>8&&dy>dx){st.scroll=true;}if(st.scroll&&st.el.value!==st.v){st.el.value=st.v;st.el.dispatchEvent(new Event('input',{bubbles:true}));}},{passive:true,capture:true});
+  document.addEventListener('touchend',()=>{if(st&&st.scroll&&st.el.value!==st.v){st.el.value=st.v;st.el.dispatchEvent(new Event('input',{bubbles:true}));st.el.dispatchEvent(new Event('change',{bubbles:true}));}st=null;},{capture:true});
+})();
