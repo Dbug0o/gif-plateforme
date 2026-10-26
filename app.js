@@ -1,11 +1,13 @@
-import { GIFEncoder, quantize, applyPalette } from './gifenc.js?v=26';
-import { t, lang, LANGS, setLang, applyI18n } from './i18n.js?v=26';
-import { FX, fxTransform, fxApply } from './effects.js?v=26';
-import { X_LIMITS, validateX, planOutput, frameCount, parseTags, matches, trendScore, xIntentUrl } from './core.js?v=26';
+import { GIFEncoder, quantize, applyPalette } from './gifenc.js?v=27';
+import { t, lang, LANGS, setLang, applyI18n } from './i18n.js?v=27';
+import { FX, fxTransform, fxApply } from './effects.js?v=27';
+import { decodeGif } from './gifdec.js?v=27';
+import { X_LIMITS, validateX, planOutput, frameCount, parseTags, matches, trendScore, xIntentUrl } from './core.js?v=27';
 
 const $ = id => document.getElementById(id);
 const MOBILE = !!(navigator.userAgentData?.mobile) || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-const BUDGET = 5_000_000; // partout
+const BUDGET = 5_000_000; // téléversements + mode léger
+let EDIT_BUDGET = BUDGET; // éditeur : 5 Mo (léger) ou 15 Mo (qualité max web)
 const S = { fx: [], src: null, crop: 'orig', ignoreWarn: false, out: null, busy: false };
 window.NEOGIF = S; // pour les tests
 let lastBadge = null, lastQ = null;
@@ -35,8 +37,18 @@ $('inVideo').onchange = async e => {
   $('srcInfo').textContent = `🎬 ${f.name} — ${v.videoWidth}×${v.videoHeight}, ${v.duration.toFixed(1)} s, ${(f.size/1e6).toFixed(1)} ${t('mb')}`; $('srcInfo').removeAttribute('data-i18n');
   openEditor();
 };
+async function loadGifSource(f) { // GIF animé → images éditables
+  const g = decodeGif(await f.arrayBuffer());
+  const imgs = await Promise.all(g.frames.map(fr => createImageBitmap(new ImageData(fr.rgba, g.width, g.height))));
+  const avg = g.frames.reduce((a, fr) => a + fr.delay, 0) / g.frames.length;
+  $('imgDelay').value = Math.max(50, Math.min(3000, Math.round(avg / 50) * 50));
+  S.src = { type: 'images', imgs, w: g.width, h: g.height, name: f.name };
+  $('srcInfo').textContent = `🎞️ ${f.name} — ${imgs.length} ${t('images')} — ${g.width}×${g.height}`; $('srcInfo').removeAttribute('data-i18n');
+  openEditor();
+}
 $('inImages').onchange = async e => {
   const files = [...e.target.files]; if (!files.length) return;
+  if (files.length === 1 && (files[0].type === 'image/gif' || /\.gif$/i.test(files[0].name))) return loadGifSource(files[0]).catch(err => alert(t('error') + err.message));
   const imgs = await Promise.all(files.map(f => createImageBitmap(f)));
   S.src = { type: 'images', imgs, w: imgs[0].width, h: imgs[0].height, name: files[0].name };
   $('srcInfo').textContent = `🖼️ ${imgs.length} ${t('images')} — ${imgs[0].width}×${imgs[0].height}`; $('srcInfo').removeAttribute('data-i18n');
@@ -84,7 +96,7 @@ function nFrames(p) {
 }
 function currentPlan(p = P(), scaleOverride = 1) {
   const c = cropRect(S.src.w, S.src.h, p);
-  const pl = planOutput({ cropW: c.w, cropH: c.h, frames: nFrames(p), maxWidth: p.maxW, maxBytes: BUDGET });
+  const pl = planOutput({ cropW: c.w, cropH: c.h, frames: nFrames(p), maxWidth: p.maxW, maxBytes: EDIT_BUDGET });
   if (scaleOverride < 1) { pl.width = Math.floor(pl.width * scaleOverride) & ~1; pl.height = Math.floor(pl.height * scaleOverride) & ~1; }
   return { ...pl, crop: c };
 }
@@ -121,7 +133,7 @@ function update() {
   $('warn').querySelector('b').textContent = t(S.src.type === 'video' ? 'warnVideo' : 'warnGif');
   setQuality(pl.quality);
   $('estInfo').textContent = t('est', { w: pl.width, h: pl.height, n: pl.frames, cap: pl.framesCapped ? t('capped') : '', mb: (pl.estBytes/1e6).toFixed(1), u: t('mb') }) +
-    (pl.reduction < 1 ? t('reduced', { p: Math.round(pl.reduction * 100), w: pl.wantedW, h: pl.wantedH }) : '.') + (' ' + t('mobileMode'));
+    (pl.reduction < 1 ? t('reduced', { p: Math.round(pl.reduction * 100), w: pl.wantedW, h: pl.wantedH }) : '.') + (' ' + t(EDIT_BUDGET > BUDGET ? 'maxMode' : 'mobileMode'));
   clearTimeout(tmr); tmr = setTimeout(() => drawPreviews(p, pl), 60);
 }
 // Aperçus animés : « Avant » = source recadrée en boucle, « Après » = simulation à la résolution/fluidité de sortie.
@@ -192,6 +204,10 @@ $('fixFps').onclick = () => { for (let i = 0; i < 30 && heavy() && +$('fps').val
 $('fixCrop').onclick = () => { document.querySelector('[data-crop="1:1"]').click(); if (heavy()) $('maxW').value = 400; resetOut(); update(); };
 $('fixIgnore').onclick = () => { S.ignoreWarn = true; update(); };
 
+function setMode(max) { EDIT_BUDGET = max ? X_LIMITS.maxBytes : BUDGET;
+  $('modeLight').classList.toggle('active', !max); $('modeMax').classList.toggle('active', max); $('modeWarn').hidden = !max;
+  if (S.src) { resetOut(); update(); } }
+$('modeLight').onclick = () => setMode(false); $('modeMax').onclick = () => setMode(true);
 // ---------- Encodage ----------
 async function encode(p, pl, onProg) {
   const src = S.src, W = pl.width, H = pl.height, cv = document.createElement('canvas');
@@ -219,8 +235,8 @@ $('btnMake').onclick = async () => {
     for (let attempt = 1; attempt <= 4; attempt++) {
       pl = currentPlan(p, scale);
       bytes = await encode(p, pl, f => { $('pBar').style.width = (f * 100) + '%'; $('pTxt').textContent = t('attempt', { a: attempt, p: Math.round(f * 100) }); });
-      if (bytes.length <= BUDGET) break;
-      scale *= Math.sqrt(BUDGET * 0.93 / bytes.length); // trop lourd : on réduit et on recommence
+      if (bytes.length <= EDIT_BUDGET) break;
+      scale *= Math.sqrt(EDIT_BUDGET * 0.93 / bytes.length); // trop lourd : on réduit et on recommence
     }
     const blob = new Blob([bytes], { type: 'image/gif' });
     S.out = { blob, width: pl.width, height: pl.height, frames: pl.frames, bytes: bytes.length };
@@ -319,17 +335,72 @@ window.NEOGIF.lib = { allGifs, addGif };
 async function gifSize(blob) { const img = new Image(); img.src = URL.createObjectURL(blob); await img.decode().catch(() => {}); return [img.naturalWidth, img.naturalHeight]; }
 function countFrames(buf) { // compte les descripteurs d'image (approx. rapide)
   const b = new Uint8Array(buf); let n = 0; for (let i = 0; i < b.length - 9; i++) if (b[i] === 0x21 && b[i + 1] === 0xF9 && b[i + 2] === 4) n++; return Math.max(1, n); }
+// Téléversement : aperçu + vérification 𝕏 (5 Mo) avant publication
+const UP = { file: null, blob: null, w: 0, h: 0, frames: 0, url: null };
+function upCheck() {
+  const v = validateX({ bytes: UP.blob.size, width: UP.w, height: UP.h, frames: UP.frames });
+  const c0 = v.checks[0]; c0.key = 'taille5'; c0.ok = UP.blob.size <= BUDGET; v.ok = v.checks.every(c => c.ok);
+  $('upBadge').className = 'badge ' + (v.ok ? 'ok' : 'ko'); $('upBadge').textContent = t(v.ok ? 'ready' : 'notReady');
+  $('upChecks').innerHTML = v.checks.map(c => `<li>${c.ok ? '✅' : '❌'} ${t('chk_' + c.key)} — <b>${c.val}</b></li>`).join('');
+  const big = UP.blob.size > BUDGET; $('upWarn').hidden = !big; $('upWarn').textContent = t('upWarn5'); $('upLight').hidden = !big;
+}
+function upShow(blob) { if (UP.url) URL.revokeObjectURL(UP.url); UP.url = URL.createObjectURL(blob); $('upImg').src = UP.url; }
+function upReset() { if (UP.url) URL.revokeObjectURL(UP.url); Object.assign(UP, { file: null, blob: null, url: null });
+  $('upImg').removeAttribute('src'); $('upPrev').hidden = true; $('upGif').value = ''; $('upSizes').textContent = ''; }
+$('upGif').onchange = async () => {
+  const f = $('upGif').files[0]; $('upMsg').textContent = ''; if (!f) return upReset();
+  if (f.type !== 'image/gif' && !/\.gif$/i.test(f.name)) { upReset(); return $('upMsg').textContent = t('notGif'); }
+  const [w, h] = await gifSize(f);
+  Object.assign(UP, { file: f, blob: f, w, h, frames: countFrames(await f.arrayBuffer()) });
+  upShow(f); $('upSizes').textContent = ''; $('upPrev').hidden = false; upCheck();
+};
+$('upCancel').onclick = () => { upReset(); $('upMsg').textContent = ''; };
+$('upEdit').onclick = async () => { const f = UP.file; if (!f) return;
+  document.querySelector('.tab[data-tab="creer"]').click();
+  try { await loadGifSource(f); } catch (e) { alert(t('error') + e.message); } };
+$('upLight').onclick = async () => {
+  if (!UP.file || S.busy) return; S.busy = true; $('upLight').disabled = true;
+  try {
+    const g = decodeGif(await UP.file.arrayBuffer());
+    let frames = g.frames.slice(0, X_LIMITS.maxFrames), step = 1, bytes = null, W = g.width, H = g.height;
+    const minW = Math.min(g.width, 480), floorW = Math.min(g.width, 360);
+    let pl = planOutput({ cropW: g.width, cropH: g.height, frames: frames.length, maxBytes: BUDGET, bpp: UP.file.size / (g.width * g.height * g.frames.length) });
+    let sc = Math.max(pl.width, minW) / g.width;
+    const src = document.createElement('canvas'); src.width = g.width; src.height = g.height; const sctx = src.getContext('2d');
+    const cv = document.createElement('canvas'), ctx = cv.getContext('2d', { willReadFrequently: true });
+    for (let attempt = 1; attempt <= 6; attempt++) {
+      W = Math.max(16, Math.round(g.width * sc)); H = Math.max(16, Math.round(g.height * sc)); cv.width = W; cv.height = H;
+      const sel = frames.filter((_, i) => i % step === 0), gif = GIFEncoder();
+      for (let i = 0; i < sel.length; i++) {
+        sctx.putImageData(new ImageData(sel[i].rgba, g.width, g.height), 0, 0);
+        ctx.clearRect(0, 0, W, H); ctx.imageSmoothingQuality = 'high'; ctx.drawImage(src, 0, 0, W, H);
+        const { data } = ctx.getImageData(0, 0, W, H);
+        let alpha = false; for (let k = 3; k < data.length; k += 4) if (data[k] < 128) { alpha = true; break; }
+        const palette = alpha ? quantize(data, 256, { format: 'rgba4444', oneBitAlpha: true }) : quantize(data, 256);
+        const idx = applyPalette(data, palette, alpha ? 'rgba4444' : 'rgb565'), ti = alpha ? palette.findIndex(c => c[3] === 0) : -1;
+        let d = 0; for (let k = i * step; k < Math.min(frames.length, (i + 1) * step); k++) d += frames[k].delay;
+        gif.writeFrame(idx, W, H, { palette, delay: Math.max(20, d), ...(ti >= 0 ? { transparent: true, transparentIndex: ti } : {}) });
+        $('upSizes').textContent = t('upLighting', { p: Math.round((i + 1) / sel.length * 100) });
+        if (i % 2 === 0) await new Promise(r => setTimeout(r));
+      }
+      gif.finish(); bytes = gif.bytes(); UP.frames = sel.length;
+      if (bytes.length <= BUDGET) break;
+      const r = Math.sqrt(BUDGET * 0.9 / bytes.length);
+      if (W * r >= minW || W > floorW) sc = Math.max(sc * r, floorW / g.width); else step++; // sous 360 px : on retire des images plutôt que de pixeliser
+    }
+    UP.blob = new Blob([bytes], { type: 'image/gif' }); UP.w = W; UP.h = H; upShow(UP.blob); upCheck();
+    $('upSizes').textContent = t('upSizes', { a: (UP.file.size / 1e6).toFixed(2), b: (bytes.length / 1e6).toFixed(2), w: W, h: H, n: UP.frames });
+  } catch (e) { $('upSizes').textContent = t('error') + e.message; console.error(e); }
+  S.busy = false; $('upLight').disabled = false;
+};
 $('upBtn').onclick = async () => {
-  const f = $('upGif').files[0]; if (!f) return $('upMsg').textContent = t('chooseGif');
-  if (f.type !== 'image/gif' && !/\.gif$/i.test(f.name)) return $('upMsg').textContent = t('notGif');
-  if (f.size > MAX_BYTES) return $('upMsg').textContent = t('tooBig');
-  const [w, h] = await gifSize(f), frames = countFrames(await f.arrayBuffer());
+  if (!UP.blob) return $('upMsg').textContent = t('chooseGif');
+  if (UP.blob.size > MAX_BYTES) return $('upMsg').textContent = t('tooBig');
   $('upBtn').disabled = true;
-  try { await addGif({ title: $('upTitle').value || f.name.replace(/\.gif$/i, ''), tags: parseTags($('upTags').value), blob: f, width: w, height: h, frames, bytes: f.size }); }
+  try { await addGif({ title: $('upTitle').value || UP.file.name.replace(/\.gif$/i, ''), tags: parseTags($('upTags').value), blob: UP.blob, width: UP.w, height: UP.h, frames: UP.frames, bytes: UP.blob.size }); }
   catch (e) { $('upMsg').textContent = t('error') + e.message; return; } finally { $('upBtn').disabled = false; }
-  const v = validateX({ bytes: f.size, width: w, height: h, frames });
-  $('upMsg').textContent = t('added') + (v.ok ? t('ready') : t('notReady') + ' (' + v.checks.filter(c => !c.ok).map(c => t('chk_' + c.key)).join(', ') + ')');
-  $('upTitle').value = $('upTags').value = ''; $('upGif').value = ''; renderLib({ force: true });
+  $('upMsg').textContent = t('added') + (UP.blob.size <= BUDGET ? t('ready') : t('notReady'));
+  $('upTitle').value = $('upTags').value = ''; upReset(); renderLib({ force: true });
 };
 $('search').oninput = () => { LIB.shown = PAGE; renderLib({ cached: true }); };
 let mine = new Set();

@@ -96,3 +96,9 @@ dialog::backdrop{background:#000b}dialog img{width:100%;border-radius:8px}
 .upbox summary{cursor:pointer;font-weight:700;color:#00f0ff;padding:.2rem 0}.upbox[open] summary{margin-bottom:.7rem}
 
 #toolbox{margin-bottom:1rem}.chips{display:flex;flex-wrap:wrap;gap:.45rem;margin:.5rem 0}.chips span{border:1px solid #ff2bd6;color:#ffd1f5;border-radius:999px;padding:.3rem .7rem;font-size:.85rem;box-shadow:0 0 8px #ff2bd644;background:#1a0838}.chips span:nth-child(even){border-color:#00f0ff;color:#c9fbff;box-shadow:0 0 8px #00f0ff44}
+
+.upPrev{margin-top:.8rem;display:flex;flex-direction:column;gap:.5rem}
+.upImg{max-width:100%;max-height:360px;align-self:center;border:1px solid var(--cyan);border-radius:10px;box-shadow:0 0 14px #00f0ff55}
+.upWarn{color:#ffe600;border:1px solid #ffe600;border-radius:10px;padding:.5rem .7rem;background:#ffe60014;text-shadow:0 0 6px #ffe60066}
+.upActs{display:flex;flex-wrap:wrap;gap:.5rem}
+.modeRow{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.8rem}
