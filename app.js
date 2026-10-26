@@ -1,7 +1,7 @@
-import { GIFEncoder, quantize, applyPalette } from './gifenc.js?v=20';
-import { t, lang, LANGS, setLang, applyI18n } from './i18n.js?v=20';
-import { FX, fxTransform, fxApply } from './effects.js?v=20';
-import { X_LIMITS, validateX, planOutput, frameCount, parseTags, matches, trendScore, xIntentUrl } from './core.js?v=20';
+import { GIFEncoder, quantize, applyPalette } from './gifenc.js?v=21';
+import { t, lang, LANGS, setLang, applyI18n } from './i18n.js?v=21';
+import { FX, fxTransform, fxApply } from './effects.js?v=21';
+import { X_LIMITS, validateX, planOutput, frameCount, parseTags, matches, trendScore, xIntentUrl } from './core.js?v=21';
 
 const $ = id => document.getElementById(id);
 const S = { fx: [], src: null, crop: 'orig', ignoreWarn: false, out: null, busy: false };
@@ -430,3 +430,5 @@ $('newGif').onclick = freshCreate;
 document.querySelector('.tab[data-tab="creer"]').addEventListener('click', e => { if (S.out) { e.stopImmediatePropagation(); freshCreate(); } }, true);
 $('fabCreate').addEventListener('click', e => { if (S.out) { e.stopImmediatePropagation(); freshCreate(); } }, true);
 if (new URLSearchParams(location.search).get('tab') === 'creer') { history.replaceState(null, '', location.pathname); document.querySelector('.tab[data-tab="creer"]').click(); }
+
+$('heroCreate').onclick = () => $('fabCreate').click();

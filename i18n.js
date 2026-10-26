@@ -87,6 +87,11 @@ const pick = () => { try { const s = localStorage.getItem('neogif-lang'); if (D[
 export let lang = pick();
 Object.assign(D.fr,{newGif:'✨ Nouveau GIF'});Object.assign(D.en,{newGif:'✨ New GIF'});Object.assign(D.es,{newGif:'✨ Nuevo GIF'});Object.assign(D.pt,{newGif:'✨ Novo GIF'});Object.assign(D.ja,{newGif:'✨ 新しいGIF'});
 Object.assign(D.fr,{dlWait:'⏳ Téléchargement…',dlDone:'✅ Téléchargé ! Il est dans ta galerie (dossier Download)'});Object.assign(D.en,{dlWait:'⏳ Downloading…',dlDone:'✅ Downloaded! Check your gallery (Download folder)'});Object.assign(D.es,{dlWait:'⏳ Descargando…',dlDone:'✅ ¡Descargado! Está en tu galería (carpeta Download)'});Object.assign(D.pt,{dlWait:'⏳ Baixando…',dlDone:'✅ Baixado! Está na sua galeria (pasta Download)'});Object.assign(D.ja,{dlWait:'⏳ ダウンロード中…',dlDone:'✅ ダウンロード完了!ギャラリー(Download)を確認'});
+Object.assign(D.fr,{heroH:'Crée ton propre GIF',heroP:'Transforme ta vidéo ou ton image en GIF pour 𝕏 : recadrage, texte meme, effets néon et glitch.',heroBtn:'⚡ Créer un GIF',upSum:'⬆️ Tu as déjà un GIF ? Téléverse-le'});
+Object.assign(D.en,{heroH:'Make your own GIF',heroP:'Turn your video or image into a GIF for 𝕏: crop, meme text, neon and glitch effects.',heroBtn:'⚡ Create a GIF',upSum:'⬆️ Already have a GIF? Upload it'});
+Object.assign(D.es,{heroH:'Crea tu propio GIF',heroP:'Convierte tu vídeo o imagen en GIF para 𝕏: recorte, texto meme, efectos neón y glitch.',heroBtn:'⚡ Crear un GIF',upSum:'⬆️ ¿Ya tienes un GIF? Súbelo'});
+Object.assign(D.pt,{heroH:'Crie seu próprio GIF',heroP:'Transforme seu vídeo ou imagem em GIF para 𝕏: corte, texto meme, efeitos neon e glitch.',heroBtn:'⚡ Criar um GIF',upSum:'⬆️ Já tem um GIF? Envie'});
+Object.assign(D.ja,{heroH:'自分だけのGIFを作ろう',heroP:'動画や画像を𝕏用GIFに:トリミング、ミーム文字、ネオン・グリッチ効果。',heroBtn:'⚡ GIFを作る',upSum:'⬆️ GIFをお持ちですか?アップロード'});
 export const t = (k, v = {}) => { const s = D[lang][k] ?? D.fr[k] ?? k; return s.replace(/\{(\w+)\}/g, (_, x) => v[x] ?? ''); };
 export function applyI18n(root = document) {
   document.documentElement.lang = LANGS[lang][1]; document.title = t('title');

@@ -91,3 +91,6 @@ dialog::backdrop{background:#000b}dialog img{width:100%;border-radius:8px}
 
 #toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,40px);opacity:0;transition:.3s;z-index:9999;background:#120630;color:#7dffc4;border:2px solid #00f0ff;box-shadow:0 0 14px #00f0ff;border-radius:14px;padding:.8rem 1.1rem;font-weight:700;max-width:90vw;text-align:center;pointer-events:none}
 #toast.show{opacity:1;transform:translate(-50%,0)}
+
+.hero{text-align:center;border-color:#ff2bd6;box-shadow:0 0 18px #ff2bd655}.hero p{opacity:.85;margin:.3rem 0 .9rem}
+.upbox summary{cursor:pointer;font-weight:700;color:#00f0ff;padding:.2rem 0}.upbox[open] summary{margin-bottom:.7rem}
