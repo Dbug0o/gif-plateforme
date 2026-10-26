@@ -1,4 +1,5 @@
 import { GIFEncoder, quantize, applyPalette } from './gifenc.js?v=28';
+import { createQEncoder } from './gifq.js?v=29';
 import { t, lang, LANGS, setLang, applyI18n } from './i18n.js?v=28';
 import { FX, fxTransform, fxApply } from './effects.js?v=28';
 import { decodeGif } from './gifdec.js?v=28';
@@ -207,8 +208,10 @@ $('fixIgnore').onclick = () => { S.ignoreWarn = true; update(); };
 async function encode(p, pl, onProg, sample) {
   const src = S.src, W = pl.width, H = pl.height, cv = document.createElement('canvas');
   cv.width = W; cv.height = H; const ctx = cv.getContext('2d', { willReadFrequently: true });
-  const gif = GIFEncoder(); const n = pl.frames;
-  const list = sample ? [...new Set(Array.from({ length: Math.min(n, sample) }, (_, k) => Math.floor(k * n / Math.min(n, sample))))] : null;
+  const gif = createQEncoder(W, H); const n = pl.frames;
+  // estimation : paires d'images consécutives pour mesurer aussi le gain des pixels réutilisés
+  const list = sample ? [...new Set(Array.from({ length: Math.min(n, sample) }, (_, k) => Math.floor(k * n / Math.min(n, sample))).flatMap(b => b + 1 < n ? [b, b + 1] : [b]))] : null;
+  let prevI = -2;
   for (let j = 0; j < (list ? list.length : n); j++) { const i = list ? list[j] : j;
     let el, delay;
     if (src.type === 'video') { el = src.el; await seek(el, Math.min(src.dur - .01, p.start + i * p.speed / p.fps)); delay = 1000 / p.fps; }
@@ -216,12 +219,11 @@ async function encode(p, pl, onProg, sample) {
     else { el = src.imgs[i]; delay = p.delay / p.speed; }
     drawFrame(ctx, el, el.videoWidth || el.width, el.videoHeight || el.height, W, H, p, i / n, i);
     const { data } = ctx.getImageData(0, 0, W, H);
-    const palette = quantize(data, 256); const idx = applyPalette(data, palette);
-    gif.writeFrame(idx, W, H, { palette, delay: Math.max(20, Math.round(delay)) });
+    gif.add(data, Math.max(20, Math.round(delay)), i !== prevI + 1); prevI = i;
     onProg(list ? (j + 1) / list.length : (i + 1) / n);
     if (j % 2 === 0) await new Promise(r => setTimeout(r));
   }
-  gif.finish(); const out = gif.bytes(); if (list) out.est = out.length * n / list.length; return out;
+  const out = gif.finish(); if (list) out.est = out.length * n / list.length; return out;
 }
 $('btnMake').onclick = async () => {
   if (!S.src || S.busy) return; S.busy = true; $('btnMake').disabled = true; $('progress').hidden = false;
